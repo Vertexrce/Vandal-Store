@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090909">
+  <title>VANDAL | Rust Console Servers</title>
+  <meta name="description" content="VANDAL Rust Console Edition community and EU 2X server.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#home" aria-label="VANDAL home"><span class="brand-mark">V</span><span>VAN<span class="red">DAL</span></span></a>
+    <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button>
+    <nav class="main-nav" aria-label="Main navigation">
+      <a class="active" href="#home"><span>⌂</span> Home</a>
+      <a href="#store"><span>▣</span> Store</a>
+      <a href="#clans"><span>♟</span> Clans</a>
+      <a href="#leaderboard"><span>🏆</span> Leaderboard</a>
+      <a href="#inventory"><span>▤</span> Inventory</a>
+      <a href="#gems"><span>◇</span> Gems</a>
+    </nav>
+    <div class="header-actions">
+      <a class="servers-link" href="#servers">SERVERS <span>⌄</span></a>
+      <button class="btn btn-small btn-red" data-modal="signin">Sign In</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-stripe stripe-one"></div><div class="hero-stripe stripe-two"></div>
+      <div class="hero-content">
+        <div class="hero-kicker"><i></i> WELCOME TO VANDAL</div>
+        <div class="hero-logo">VAN<span>DAL</span></div>
+        <p class="hero-subtitle">Premium Rust Console Edition Servers</p>
+        <div class="online-pill"><i></i> Players Online: <strong id="total-online">0</strong></div>
+        <div class="hero-buttons">
+          <button class="btn btn-red" data-modal="link">↗ &nbsp; LINK ACCOUNT</button>
+          <a class="btn btn-discord" href="https://discord.com/" target="_blank" rel="noreferrer">◉ &nbsp; JOIN DISCORD</a>
+        </div>
+      </div>
+      <div class="hero-bottom-fade"></div>
+    </section>
+
+    <section class="servers-section section-wrap" id="servers">
+      <div class="section-heading"><h2>OUR <span>SERVERS</span></h2><p>Live player counts across all regions</p></div>
+      <div class="server-grid">
+        <article class="server-card">
+          <div class="server-region">EU</div>
+          <div class="server-main">
+            <div class="server-title-row"><h3>EU 2X</h3><span class="status"><i></i> Online</span></div>
+            <div class="server-location">Europe</div>
+            <div class="players-row"><span>Players</span><strong><b id="server-online">0</b><em>/100</em></strong></div>
+            <div class="progress"><span id="population-bar"></span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="offers-section section-wrap" id="offers">
+      <div class="section-heading"><h2>WHAT <span>WE OFFER</span></h2><p>Everything you need for the best Rust Console experience</p></div>
+      <div class="offer-grid">
+        <a class="offer-card" id="store" href="#store"><span class="offer-icon">▣</span><div><h3>In-Game Shop</h3><p>VIP packages, resource packs, and more delivered directly to your in-game inventory.</p></div></a>
+        <a class="offer-card" id="gems" href="#gems"><span class="offer-icon">◇</span><div><h3>Gem System</h3><p>Earn gems while you play, spend them on exclusive items, and compete on the gem leaderboard.</p></div></a>
+        <a class="offer-card" id="kits" href="#kits"><span class="offer-icon">▱</span><div><h3>Daily Kits</h3><p>Claim free daily kits based on your rank. Higher tiers unlock better rewards.</p></div></a>
+        <a class="offer-card" id="clans" href="#clans"><span class="offer-icon">⬡</span><div><h3>Clan System</h3><p>Create and manage your clan, track members, and dominate the leaderboards together.</p></div></a>
+        <a class="offer-card" id="leaderboard" href="#leaderboard"><span class="offer-icon">♜</span><div><h3>Leaderboards</h3><p>Compete for the top spot across kills, playtime, and more. Real-time stat tracking.</p></div></a>
+        <a class="offer-card" id="inventory" href="#inventory"><span class="offer-icon">▤</span><div><h3>Player Inventory</h3><p>Connect your account and keep track of your available rewards and items.</p></div></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand"><a class="brand" href="#home"><span class="brand-mark">V</span><span>VAN<span class="red">DAL</span></span></a><p>Built for the VANDAL community.</p></div>
+      <div class="footer-column"><h4>SOCIALS</h4><a href="https://discord.com/" target="_blank" rel="noreferrer">◉ Discord</a><a href="#">▶ YouTube</a><a href="#">♪ TikTok</a><a href="#">𝕏 Twitter</a></div>
+      <div class="footer-column"><h4>NAVIGATION</h4><a href="#store">Store</a><a href="#inventory">Profile</a><a href="#gems">Gems</a><a href="#servers">Servers</a></div>
+      <div class="footer-column"><h4>LEGAL</h4><a href="#">Terms</a><a href="#">Privacy</a></div>
+    </div>
+    <div class="copyright"><span class="brand-mini">V<span>ANDAL</span></span><span>© 2026 Vandal. All rights reserved.</span></div>
+  </footer>
+
+  <dialog id="site-modal" class="site-modal">
+    <form method="dialog"><button class="modal-close" aria-label="Close">×</button></form>
+    <div class="modal-mark">V</div>
+    <h2 id="modal-title">VANDAL ACCOUNT</h2>
+    <p id="modal-copy">Account sign-in will be connected when the authentication backend is configured.</p>
+    <a class="btn btn-red modal-action" href="https://discord.com/" target="_blank" rel="noreferrer">CONTINUE WITH DISCORD</a>
+    <small>This is a front-end preview. No account details are collected.</small>
+  </dialog>
+  <script src="script.js"></script>
+</body>
+</html>
