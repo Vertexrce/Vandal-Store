@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="clans.css">
 </head>
 <body>
 <header class="site-header">
@@ -56,11 +57,14 @@
 </section>
 
 <section class="page" id="page-clans" data-page-panel="clans">
-  <div class="subnav server-tabs"><button class="subtab selected">▤ &nbsp; EU 2X</button></div>
+  <div class="subnav server-tabs" id="clan-server-tabs" aria-label="Choose a game server"></div>
   <section class="content-page clans-page">
-    <div class="left-heading"><h1>CLANS</h1><p>Create or join a clan to dominate the servers together</p></div>
-    <div class="section-toolbar"><h2>♟ &nbsp; ALL CLANS</h2><button class="btn btn-red" data-modal="clan">⇥ &nbsp; JOIN CLAN</button></div>
-    <div class="empty-state"><div class="empty-icon">▤</div><h3>No clans to display yet</h3><p>Clans created on VANDAL EU 2X will appear here.</p></div>
+    <div class="left-heading"><h1>CLANS</h1><p>Create a clan or join one with an invite code. Discord and website codes are shared.</p></div>
+    <div class="section-toolbar"><h2>♟ &nbsp; ALL CLANS <span id="clan-count" class="clan-count"></span></h2><div class="clan-actions"><button class="btn clan-join-btn" id="clan-open-join" type="button">⇥ &nbsp; JOIN CLAN</button><button class="btn btn-red" id="clan-open-create" type="button">＋ &nbsp; CREATE CLAN</button></div></div>
+    <div class="notice clan-notice" id="clan-notice" role="status"></div>
+    <section class="my-clan-section hidden" id="my-clan-section"></section>
+    <div class="clan-grid" id="clan-grid"></div>
+    <div class="empty-state"><div class="empty-icon">♟</div><h3 id="clan-empty-title">Loading clans…</h3><p id="clan-empty-copy">Select a game server to view its active clans.</p></div>
   </section>
 </section>
 
@@ -133,5 +137,37 @@
 </div><div class="copyright"><span class="brand-mini">V<span>ANDAL</span></span><span>© 2026 Vandal. All rights reserved.</span></div></footer>
 
 <dialog id="site-modal" class="site-modal"><form method="dialog"><button class="modal-close" aria-label="Close">×</button></form><div class="modal-mark">V</div><h2 id="modal-title">VANDAL ACCOUNT</h2><p id="modal-copy">Sign in securely with Discord to access your VANDAL profile.</p><form id="link-account-form" class="link-account-form hidden"><label for="gamertag-input">RUST CONSOLE GAMERTAG</label><input id="gamertag-input" name="gamertag" minlength="2" maxlength="32" required placeholder="Enter your in-game name"><button class="btn btn-red modal-action" type="submit">LINK ACCOUNT</button><p id="link-account-notice" class="form-notice" aria-live="polite"></p></form><a class="btn btn-red modal-action" id="discord-login-action" href="/auth/discord">CONTINUE WITH DISCORD</a><small id="modal-footnote">Secure sign-in powered by Discord OAuth2.</small></dialog>
+<dialog id="clan-join-dialog" class="clan-dialog">
+  <button class="clan-dialog-close" data-close-dialog="clan-join-dialog" type="button" aria-label="Close">×</button>
+  <h2>Join Clan</h2><div class="clan-dialog-mark join-mark">⇥</div><p>Enter an invite code to join a clan on the selected server.</p>
+  <form id="clan-join-form"><label for="clan-invite-code">INVITE CODE</label><input id="clan-invite-code" name="code" maxlength="32" required autocomplete="off" placeholder="ENTER-CODE-HERE"><button class="btn clan-join-btn" type="submit">⇥ &nbsp; JOIN CLAN</button><p class="form-notice" id="clan-join-notice" aria-live="polite"></p></form>
+</dialog>
+<dialog id="clan-create-dialog" class="clan-dialog clan-create-dialog">
+  <button class="clan-dialog-close" data-close-dialog="clan-create-dialog" type="button" aria-label="Close">×</button>
+  <h2>Create Clan</h2>
+  <form id="clan-create-form">
+    <label for="clan-name">CLAN NAME</label><input id="clan-name" name="name" minlength="3" maxlength="20" required placeholder="3–20 characters">
+    <label for="clan-tag">CLAN TAG</label><input id="clan-tag" name="tag" minlength="1" maxlength="4" required placeholder="1–4 characters (e.g. CLAN)">
+    <fieldset class="clan-color-field"><legend>CLAN COLOR</legend><div class="clan-colors">
+      <label style="--swatch:#ff2020"><input type="radio" name="color" value="red"><span title="Red"></span></label>
+      <label style="--swatch:#20c933"><input type="radio" name="color" value="green"><span title="Green"></span></label>
+      <label style="--swatch:#2775ff"><input type="radio" name="color" value="blue" checked><span title="Blue"></span></label>
+      <label style="--swatch:#f45aa5"><input type="radio" name="color" value="pink"><span title="Pink"></span></label>
+      <label style="--swatch:#ff8a18"><input type="radio" name="color" value="orange"><span title="Orange"></span></label>
+      <label style="--swatch:#f5ca24"><input type="radio" name="color" value="yellow"><span title="Yellow"></span></label>
+      <label style="--swatch:#2438b8"><input type="radio" name="color" value="navy"><span title="Navy"></span></label>
+      <label style="--swatch:#96999f"><input type="radio" name="color" value="gray"><span title="Gray"></span></label>
+      <label style="--swatch:#20d8de"><input type="radio" name="color" value="cyan"><span title="Cyan"></span></label>
+    </div></fieldset>
+    <label for="clan-image">CLAN IMAGE <small>(optional, max 5 MB)</small></label><input id="clan-image" name="image" type="file" accept="image/jpeg,image/png,image/gif,image/webp">
+    <label for="clan-description">DESCRIPTION <small>(optional)</small></label><textarea id="clan-description" name="description" maxlength="200" rows="4" placeholder="Tell others about your clan…"></textarea>
+    <button class="btn btn-red" type="submit">CREATE CLAN</button><p class="form-notice" id="clan-create-notice" aria-live="polite"></p>
+  </form>
+</dialog>
+<dialog id="clan-details-dialog" class="clan-dialog clan-details-dialog">
+  <button class="clan-dialog-close" data-close-dialog="clan-details-dialog" type="button" aria-label="Close">×</button>
+  <div id="clan-details-content"></div>
+</dialog>
+<script src="clans.js"></script>
 <script src="script.js"></script>
 </body></html>

@@ -1,22 +1,20 @@
-VANDAL Discord channel-loading fix
+VANDAL clan website and RCE bot integration
 
 Updated files:
-- server.js
-  - Cache successful Discord admin-role lookups for 60 seconds.
-  - Deduplicate simultaneous role lookups for the same Discord user.
-  - Include Discord's Retry-After value in 429 error logs/messages when provided.
-- dashboard-api.js
-  - Deduplicate simultaneous Discord channel-list requests.
-  - Validate the Discord channel-list response before processing it.
-  - Include Discord's Retry-After value in API error messages.
-  - Removed a duplicate bot-token configuration check.
-- admin.js
-  - Do not display a successful clan-activity refresh when no clan channels are configured.
+- Vandal-Store-main/
+  - Added public clan server tabs, active clan cards, create/join dialogs, clan details, and shared invite-code actions.
+  - Added a server-to-server RCE bot client and admin Kits/Linked Users dashboard.
+  - Added Store Kit mappings and safe clan image uploads.
+- Vandal-Rce-main/
+  - Added an authenticated aiohttp bridge for clan reads/creation, shared invite joins, invite codes, and Store Kit grants.
+  - Added a clan image URL migration and uses the bot's configured Discord roles, channels, and active-clan panel.
 
 Deployment:
-1. Replace the project files with the contents of this ZIP (or upload the updated project to the same Git repository).
-2. Keep your existing Railway environment variables and persistent volume.
-3. Redeploy on Railway.
-4. Open /admin and refresh the Discord/Clans views.
+1. Deploy the website and Python RCE bot as their existing separate services.
+2. Set `RCE_WEB_API_SECRET` to the same private value (32+ characters) on both services; set `RCE_API_URL` on the website to the bot service base URL.
+3. Keep both services' persistent volumes and existing environment variables. If they share one Discord token, set `DISCORD_BOT_ENABLED=false` on the website service.
+4. Redeploy both services.
+5. Register each game server with the RCE bot and run `/clan setup` before creating clans on the website.
+6. Configure Store Kit products with exact in-game kit names before using Admin → Kits & Linked Users.
 
-The changes reduce repeated role and channel requests. They do not bypass Discord rate limits or guarantee channel access if the configured guild ID, bot token, bot membership, or Discord permissions are incorrect.
+The bridge secret is required for website-to-bot calls. Discord role/channel creation still depends on bot guild membership, role hierarchy, permissions, and completed `/clan setup`.

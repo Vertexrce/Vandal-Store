@@ -1,5 +1,5 @@
 const $ = selector => document.querySelector(selector);
-const state = { me: null, servers: [], channels: [], settings: {} };
+const state = { me: null, servers: [], channels: [], settings: {}, kits: [], kitServers: [] };
 
 async function api(url, options = {}) {
   const response = await fetch(url, {
@@ -37,6 +37,10 @@ function openTab(name) {
   $('#mobile-menu').setAttribute('aria-expanded', 'false');
   if (name === 'discord') loadDiscordOverview();
   if (name === 'clans') loadClanActivity();
+  if (name === 'kits') {
+    loadAdminKits();
+    loadLinkedUsers();
+  }
 }
 
 document.querySelectorAll('[data-tab]').forEach(button => button.addEventListener('click', () => openTab(button.dataset.tab)));
@@ -50,7 +54,7 @@ function renderProducts(products) {
   $('#product-count').textContent = products.length.toLocaleString();
   $('#product-list').innerHTML = products.length ? products.map(product => `
     <div class="list-item">
-      <div><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category)} · ${escapeHtml(product.price)}${product.description ? ` · ${escapeHtml(product.description)}` : ''}</small></div>
+      <div><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category)} · ${escapeHtml(product.price)}${product.gameKit ? ` · RCE kit: ${escapeHtml(product.gameKit)}` : ''}${product.description ? ` · ${escapeHtml(product.description)}` : ''}</small></div>
       <button class="btn danger" type="button" data-delete-product="${escapeHtml(product.id)}">DELETE</button>
     </div>`).join('') : '<div class="empty">No products yet. Add a product above.</div>';
   $('#product-list').querySelectorAll('[data-delete-product]').forEach(button => button.addEventListener('click', async () => {
@@ -69,6 +73,14 @@ async function loadProducts() {
   renderProducts(products);
 }
 
+function updateStoreKitField() {
+  const isKit = $('#product-category').value === 'Kits';
+  $('#game-kit-wrap').classList.toggle('hidden', !isKit);
+  $('#game-kit-name').required = isKit;
+}
+$('#product-category').addEventListener('change', updateStoreKitField);
+updateStoreKitField();
+
 $('#product-form').addEventListener('submit', async event => {
   event.preventDefault();
   const form = event.currentTarget;
@@ -77,10 +89,102 @@ $('#product-form').addEventListener('submit', async event => {
   try {
     await api('/api/admin/products', { method: 'POST', body: JSON.stringify(data) });
     form.reset();
+    updateStoreKitField();
     setNotice('#store-notice', 'Product added.', 'success');
     await loadProducts();
     await loadOverview(true);
   } catch (error) { setNotice('#store-notice', error.message, 'error'); }
+});
+
+function renderAdminKits(data) {
+  state.kits = data.kits || [];
+  state.kitServers = data.servers || [];
+  const list = $('#admin-kits-list');
+  list.innerHTML = state.kits.length ? state.kits.map(kit => `
+    <div class="list-item">
+      <div class="kit-product-info"><strong>${escapeHtml(kit.name)}</strong><small>${escapeHtml(kit.price)} · ${kit.gameKit ? `RCE kit: ${escapeHtml(kit.gameKit)}` : 'Missing exact RCE kit name'}</small></div>
+      ${kit.gameKit
+        ? '<span class="tag online">READY</span>'
+        : `<div class="kit-map-controls"><input class="field" data-kit-mapping="${escapeHtml(kit.id)}" maxlength="64" placeholder="Exact in-game kit name"><button class="btn secondary" type="button" data-save-kit-mapping="${escapeHtml(kit.id)}">SAVE</button></div>`}
+    </div>`).join('') : '<div class="empty">No kits configured in Store yet. Add a product and select Kits.</div>';
+  list.querySelectorAll('[data-save-kit-mapping]').forEach(button => button.addEventListener('click', async () => {
+    const productId = button.dataset.saveKitMapping;
+    const input = [...list.querySelectorAll('[data-kit-mapping]')].find(node => node.dataset.kitMapping === productId);
+    const gameKit = input?.value.trim() || '';
+    if (!gameKit) return setNotice('#kit-give-notice', 'Enter the exact in-game kit name first.', 'error');
+    try {
+      await api(`/api/admin/products/${encodeURIComponent(productId)}/kit-config`, {
+        method: 'PUT',
+        body: JSON.stringify({ gameKit })
+      });
+      setNotice('#kit-give-notice', 'Store kit mapping saved.', 'success');
+      await Promise.all([loadAdminKits(), loadProducts()]);
+    } catch (error) { setNotice('#kit-give-notice', error.message, 'error'); }
+  }));
+
+  const kitSelect = $('#give-kit-product');
+  const available = state.kits.filter(kit => kit.gameKit);
+  kitSelect.innerHTML = available.length
+    ? '<option value="">Choose a store kit</option>' + available.map(kit => `<option value="${escapeHtml(kit.id)}">${escapeHtml(kit.name)} · ${escapeHtml(kit.gameKit)}</option>`).join('')
+    : '<option value="">No configured store kits</option>';
+
+  const serverSelect = $('#give-kit-server');
+  serverSelect.innerHTML = state.kitServers.length
+    ? '<option value="">Choose an RCE server</option>' + state.kitServers.map(server => `<option value="${escapeHtml(server.id)}">${escapeHtml(server.name)}${server.region ? ` · ${escapeHtml(server.region)}` : ''}</option>`).join('')
+    : '<option value="">No RCE servers available</option>';
+}
+
+async function loadAdminKits() {
+  try {
+    renderAdminKits(await api('/api/admin/kits'));
+  } catch (error) {
+    $('#admin-kits-list').innerHTML = `<div class="empty">${escapeHtml(error.message)}</div>`;
+    $('#give-kit-product').innerHTML = '<option value="">Kit data unavailable</option>';
+    $('#give-kit-server').innerHTML = '<option value="">RCE server data unavailable</option>';
+  }
+}
+
+async function loadLinkedUsers() {
+  try {
+    const users = await api('/api/admin/linked-users');
+    $('#linked-users-list').innerHTML = users.length ? users.map(user => {
+      const linkedDate = user.linkedAt ? new Date(user.linkedAt) : null;
+      const linkedLabel = linkedDate && Number.isFinite(linkedDate.getTime()) ? linkedDate.toLocaleDateString() : 'Date unavailable';
+      return `<div class="list-item">
+        <div><strong>${escapeHtml(user.gamertag)}</strong><small>${escapeHtml(user.discordUsername)} · Discord ID ${escapeHtml(user.discordId)} · Linked ${escapeHtml(linkedLabel)}</small></div>
+        <span class="tag">${escapeHtml(String(user.linkStatus || 'unverified').toUpperCase())}</span>
+      </div>`;
+    }).join('') : '<div class="empty">No website accounts have linked an in-game name yet.</div>';
+  } catch (error) {
+    $('#linked-users-list').innerHTML = `<div class="empty">${escapeHtml(error.message)}</div>`;
+  }
+}
+
+$('#kit-give-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const productId = $('#give-kit-product').value;
+  const serverId = $('#give-kit-server').value;
+  const gamertag = $('#give-kit-gamertag').value.trim();
+  const kit = state.kits.find(item => item.id === productId);
+  const server = state.kitServers.find(item => item.id === serverId);
+  if (!kit || !server) return setNotice('#kit-give-notice', 'Choose a configured store kit and RCE server.', 'error');
+  if (!confirm(`Send the configured kit "${kit.gameKit}" to "${gamertag}" on ${server.name}?\n\nThis gives the kit in-game immediately.`)) return;
+  setNotice('#kit-give-notice', 'Sending kit through the RCE bot…');
+  try {
+    const result = await api('/api/admin/kits/give', {
+      method: 'POST',
+      body: JSON.stringify({ productId, serverId, gamertag })
+    });
+    setNotice('#kit-give-notice', result.message || 'Kit sent successfully.', 'success');
+  } catch (error) {
+    setNotice('#kit-give-notice', error.message, 'error');
+  }
+});
+
+$('#refresh-kits-users').addEventListener('click', async () => {
+  setNotice('#kit-give-notice', 'Refreshing store kits and linked users…');
+  await Promise.allSettled([loadAdminKits(), loadLinkedUsers()]);
+  setNotice('#kit-give-notice', 'Dashboard data refreshed.', 'success');
 });
 
 function renderServers(servers) {

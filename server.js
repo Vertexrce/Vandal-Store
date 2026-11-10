@@ -93,10 +93,11 @@ class PersistentFileStore extends session.Store {
 }
 
 const sessionStore = new PersistentFileStore(path.join(DATA_DIR, 'sessions'));
+const WEBSITE_GATEWAY_BOT_ENABLED = String(process.env.DISCORD_BOT_ENABLED || 'true').toLowerCase() !== 'false';
 
 if (!process.env.SESSION_SECRET) console.warn('WARNING: SESSION_SECRET is not set. Set a long random value in Railway.');
 app.set('trust proxy', 1);
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '8mb' }));
 app.use(session({
   store: sessionStore,
   name: 'vandal.sid',
@@ -242,7 +243,13 @@ app.post('/api/account/link', requireLogin, async (req, res) => {
   const normalized = gamertag.toLowerCase();
   const alreadyUsed = Object.entries(accounts).some(([id, account]) => id !== req.session.user.id && account.gamertag && account.gamertag.toLowerCase() === normalized);
   if (alreadyUsed) return res.status(409).json({ error: 'That gamertag is already linked to another website account.' });
-  accounts[req.session.user.id] = { ...(accounts[req.session.user.id] || {}), gamertag, linkedAt: new Date().toISOString(), linkStatus: 'unverified' };
+  accounts[req.session.user.id] = {
+    ...(accounts[req.session.user.id] || {}),
+    gamertag,
+    discordUsername: req.session.user.username,
+    linkedAt: new Date().toISOString(),
+    linkStatus: 'unverified'
+  };
   await writeAccounts(accounts);
   res.json({ ok: true, account: accounts[req.session.user.id], displayName: gamertag, verification: 'unverified' });
 });
@@ -266,9 +273,11 @@ async function writeProducts(products) {
 app.get('/api/admin/products', requireAdmin, async (req, res) => res.json(await readProducts()));
 app.post('/api/admin/products', requireAdmin, async (req, res) => {
   const { name, category, price, description } = req.body || {};
+  const gameKit = String(req.body?.gameKit || '').trim();
   if (![name, category, price].every(v => typeof v === 'string' && v.trim()) || name.length > 80 || description?.length > 500 || !['VIP', 'Packs', 'Kits'].includes(category)) return res.status(400).json({ error: 'Enter a name, one of the supported categories, and a price. Keep the description under 500 characters.' });
+  if (category === 'Kits' && !/^[A-Za-z0-9 _.-]{1,64}$/.test(gameKit)) return res.status(400).json({ error: 'For a kit product, enter the exact in-game RCE kit name using letters, numbers, spaces, dots, underscores, or hyphens.' });
   const products = await readProducts();
-  const product = { id: require('crypto').randomUUID(), name: name.trim(), category: category.trim(), price: price.trim(), description: String(description || '').trim(), createdAt: new Date().toISOString() };
+  const product = { id: require('crypto').randomUUID(), name: name.trim(), category: category.trim(), price: price.trim(), description: String(description || '').trim(), ...(category === 'Kits' ? { gameKit } : {}), createdAt: new Date().toISOString() };
   products.push(product); await writeProducts(products); res.status(201).json(product);
 });
 app.delete('/api/admin/products/:id', requireAdmin, async (req, res) => {
@@ -277,14 +286,33 @@ app.delete('/api/admin/products/:id', requireAdmin, async (req, res) => {
   if (next.length === products.length) return res.status(404).json({ error: 'Product not found.' });
   await writeProducts(next); res.json({ ok: true });
 });
+app.put('/api/admin/products/:id/kit-config', requireAdmin, async (req, res) => {
+  const products = await readProducts();
+  const product = products.find(item => item.id === req.params.id);
+  if (!product || String(product.category).toLowerCase() !== 'kits') return res.status(404).json({ error: 'Store kit not found.' });
+  const gameKit = String(req.body?.gameKit || '').trim();
+  if (!/^[A-Za-z0-9 _.-]{1,64}$/.test(gameKit)) return res.status(400).json({ error: 'Enter the exact in-game kit name using letters, numbers, spaces, dots, underscores, or hyphens.' });
+  product.gameKit = gameKit;
+  await writeProducts(products);
+  res.json({ ok: true, product });
+});
 
 const { createDashboardApi } = require('./dashboard-api');
+const { createClanApi } = require('./clan-api');
 createDashboardApi(app, {
   DATA_DIR,
   GUILD_ID,
   ADMIN_ROLE_ID,
   BOT_TOKEN,
   requireAdmin,
+  readProducts
+});
+createClanApi(app, {
+  DATA_DIR,
+  GUILD_ID,
+  requireLogin,
+  requireAdmin,
+  readAccounts,
   readProducts
 });
 
@@ -295,7 +323,7 @@ app.get('/admin', async (req, res, next) => {
   res.sendFile(path.join(__dirname, 'admin.html'), err => { if (err) next(err); });
 });
 app.use((req, res, next) => {
-  const privateFiles = new Set(['server.js', 'bot.js', 'dashboard-api.js']);
+  const privateFiles = new Set(['server.js', 'bot.js', 'dashboard-api.js', 'clan-api.js', 'rce-client.js']);
   if (privateFiles.has(path.basename(req.path)) || req.path === '/data' || req.path.startsWith('/data/')) {
     return res.sendStatus(404);
   }
@@ -308,8 +336,13 @@ const { startDiscordBot } = require('./bot');
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`VANDAL website listening on ${PORT}`);
-  // Run the website and Discord bot in the same Railway service/process.
-  startDiscordBot(BOT_TOKEN).catch(error => {
-    console.error('[VANDAL BOT] Startup error:', error.message);
-  });
+  if (WEBSITE_GATEWAY_BOT_ENABLED) {
+    // Keep the website gateway bot optional. If the Python RCE bot uses the
+    // same Discord application/token, only one process may own that gateway.
+    startDiscordBot(BOT_TOKEN).catch(error => {
+      console.error('[VANDAL BOT] Startup error:', error.message);
+    });
+  } else {
+    console.log('[VANDAL BOT] Gateway client disabled by DISCORD_BOT_ENABLED=false.');
+  }
 });

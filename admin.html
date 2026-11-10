@@ -53,6 +53,10 @@
     .panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:17px}
     .panel-head h2{margin:0}
     .hint{color:#818691;font-size:11px;line-height:1.6;margin:12px 0 0}
+    .hidden{display:none!important}
+    .kit-product-info{min-width:190px}
+    .kit-map-controls{display:flex;align-items:center;gap:8px;min-width:min(420px,55%)}
+    .kit-map-controls .field{flex:1}
     .notice{color:#c4c6cc;font-size:12px;min-height:18px;margin:12px 0 0}
     .notice.error{color:#ff7b8b}
     .notice.success{color:#48d995}
@@ -115,6 +119,7 @@
       <nav class="side-nav" aria-label="Admin sections">
         <button class="selected" data-tab="home"><span class="icon">⌂</span>Home</button>
         <button data-tab="store"><span class="icon">▣</span>Store</button>
+        <button data-tab="kits"><span class="icon">🎒</span>Kits &amp; Linked Users</button>
         <button data-tab="rcon"><span class="icon">⌘</span>RCON</button>
         <button data-tab="discord"><span class="icon">◉</span>Discord</button>
         <button data-tab="clans"><span class="icon">♟</span>Clans</button>
@@ -160,11 +165,38 @@
                 <div class="field-wrap"><label for="product-category">Category</label><select class="field" id="product-category" name="category"><option>VIP</option><option>Packs</option><option>Kits</option></select></div>
                 <div class="field-wrap"><label for="product-price">Price</label><input class="field" id="product-price" name="price" placeholder="e.g. £4.99" maxlength="40" required></div>
                 <div class="field-wrap" style="grid-column:1/-1"><label for="product-description">Description</label><input class="field" id="product-description" name="description" maxlength="500" placeholder="Optional short description"></div>
+                <div class="field-wrap hidden" id="game-kit-wrap"><label for="game-kit-name">Exact in-game RCE kit name</label><input class="field" id="game-kit-name" name="gameKit" maxlength="64" placeholder="Must match the kit name configured on Rust"><small class="hint">Required for Kits. This is the kit name the bot sends to the selected game server.</small></div>
               </div>
               <div class="button-row"><button class="btn" type="submit">ADD PRODUCT</button></div>
             </form>
             <div class="notice" id="store-notice" role="status"></div>
             <div class="list" id="product-list"><div class="empty">Loading products…</div></div>
+          </section>
+        </section>
+
+        <section class="view" data-view="kits">
+          <div class="eyebrow">PLAYER REWARDS</div>
+          <div class="heading-row"><div><h1>Kits &amp; Linked Users</h1><p class="lead">Only kits configured in Store → Kits can be sent. The RCE bot delivers them to a player's in-game inventory.</p></div><button class="btn secondary" id="refresh-kits-users" type="button">REFRESH</button></div>
+          <section class="panel">
+            <div class="panel-head"><h2>STORE KITS</h2><button class="btn secondary" data-open-tab="store" type="button">Configure in Store</button></div>
+            <div class="list" id="admin-kits-list"><div class="empty">Loading store kits…</div></div>
+          </section>
+          <section class="panel">
+            <h2>GIVE A STORE KIT</h2>
+            <form id="kit-give-form">
+              <div class="form-grid three">
+                <div class="field-wrap"><label for="give-kit-product">Store kit</label><select class="field" id="give-kit-product" required></select></div>
+                <div class="field-wrap"><label for="give-kit-server">RCE game server</label><select class="field" id="give-kit-server" required></select></div>
+                <div class="field-wrap"><label for="give-kit-gamertag">In-game username</label><input class="field" id="give-kit-gamertag" maxlength="32" required placeholder="Player's exact in-game name"></div>
+              </div>
+              <div class="button-row"><button class="btn" type="submit">GIVE KIT</button></div>
+            </form>
+            <div class="notice" id="kit-give-notice" role="status"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h2>LINKED WEBSITE USERS</h2><span class="tag">UNVERIFIED NAMES</span></div>
+            <p class="hint">These are Discord accounts with an in-game name saved on the website. The existing link flow does not prove ownership of that game account.</p>
+            <div class="list" id="linked-users-list"><div class="empty">Loading linked users…</div></div>
           </section>
         </section>
 
@@ -223,7 +255,7 @@
 
         <section class="view" data-view="clans">
           <div class="eyebrow">CLAN SYSTEM</div>
-          <div class="heading-row"><div><h1>Clans</h1><p class="lead">Choose the channels used by the bot. The dashboard displays the latest active-clan panel and channel activity.</p></div></div>
+          <div class="heading-row"><div><h1>Clans</h1><p class="lead">Run <b>/clan setup</b> in Discord for each RCE game server first. Website clan creation then uses the bot's role, channel, invite-code, and active-panel setup.</p></div></div>
           <section class="panel">
             <h2>CLAN CHANNELS</h2>
             <div class="form-grid three">
