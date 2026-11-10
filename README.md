@@ -1,23 +1,26 @@
 # VANDAL Website
 
-A responsive static website based on the Saturn screenshots you supplied, rebranded for VANDAL with a red / black / white palette.
+Updated responsive VANDAL front-end, styled in red / black / white and based on the screenshots supplied.
 
-## Preview
-Open `index.html` in a browser. No build tools are required.
+## Run locally
+Open `index.html` in Edge or Chrome. No build step is required.
+
+## Deploy to Railway
+The project includes a `Dockerfile` using NGINX. Push the contents of this folder to a GitHub repository, connect that repository in Railway, and generate a public domain under Settings → Networking.
 
 ## Files
-- `index.html` — page structure and content
+- `index.html` — page structure and all tabs
 - `styles.css` — responsive layout and VANDAL styling
-- `script.js` — mobile navigation, demo population, and placeholder dialogs
+- `script.js` — tab navigation, store filters, cart preview, and placeholder dialogs
+- `assets/hero.gif` — the animated banner you uploaded
+- `Dockerfile` — static-site hosting on Railway
 
-## Before publishing
-1. Replace the Discord invite URL (`https://discord.com/`) with your server invite.
-2. Add your real YouTube, TikTok, X, Terms, and Privacy URLs.
-3. Connect the EU 2X population display to your server status API. The current `0/100` is demo data.
-4. Configure Discord OAuth and game-account linking on a secure backend. The current sign-in and link-account dialogs are placeholders and do not collect credentials.
-5. If you want to use your animated GIF as the hero background, put it in `assets/` as `hero.gif` and add this to `.hero` in `styles.css`:
-   `background-image: linear-gradient(rgba(0,0,0,.58), rgba(0,0,0,.72)), url("assets/hero.gif"); background-size: cover; background-position: center;`
-   The GIF was not included in the files available in this chat, so the current hero uses a CSS-generated dark/red background.
+## Included sections
+Home, Store (VIP / Packs / Kits / Cart), Clans, Leaderboard, Inventory, Gems. **Top Supporters is at the bottom of the Store page**, as clarified.
 
-## Design notes
-The bottom "Ready to Play?" call-to-action section is intentionally omitted. The footer remains.
+## Important integration notes
+- The website only shows EU 2X.
+- The leaderboard contains empty placeholders and does not use Saturn player statistics or connect to Saturn.
+- Store products shown are visual examples/placeholders. Replace or populate them from your admin panel later.
+- Player population, account linking, Discord OAuth, clans, inventory, gem balance, supporter data, checkout, and purchases need your own backend/API integration before they become live features.
+- Replace the Discord invite and social/legal placeholder links before publishing.

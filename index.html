@@ -1,96 +1,133 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#090909">
-  <title>VANDAL | Rust Console Servers</title>
-  <meta name="description" content="VANDAL Rust Console Edition community and EU 2X server.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090909">
+<title>VANDAL | Rust Console Servers</title>
+<meta name="description" content="VANDAL Rust Console Edition community and EU 2X server.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="site-header">
-    <a class="brand" href="#home" aria-label="VANDAL home"><span class="brand-mark">V</span><span>VAN<span class="red">DAL</span></span></a>
-    <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button>
-    <nav class="main-nav" aria-label="Main navigation">
-      <a class="active" href="#home"><span>⌂</span> Home</a>
-      <a href="#store"><span>▣</span> Store</a>
-      <a href="#clans"><span>♟</span> Clans</a>
-      <a href="#leaderboard"><span>🏆</span> Leaderboard</a>
-      <a href="#inventory"><span>▤</span> Inventory</a>
-      <a href="#gems"><span>◇</span> Gems</a>
-    </nav>
-    <div class="header-actions">
-      <a class="servers-link" href="#servers">SERVERS <span>⌄</span></a>
-      <button class="btn btn-small btn-red" data-modal="signin">Sign In</button>
+<header class="site-header">
+  <a class="brand" href="#home" data-page="home"><span class="brand-mark">V</span><span>VAN<span class="red">DAL</span></span></a>
+  <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button>
+  <nav class="main-nav" aria-label="Main navigation">
+    <a class="active" href="#home" data-page="home"><span>⌂</span> Home</a>
+    <a href="#store" data-page="store"><span>▣</span> Store</a>
+    <a href="#clans" data-page="clans"><span>♟</span> Clans</a>
+    <a href="#leaderboard" data-page="leaderboard"><span>🏆</span> Leaderboard</a>
+    <a href="#inventory" data-page="inventory"><span>▤</span> Inventory</a>
+    <a href="#gems" data-page="gems"><span>◇</span> Gems</a>
+  </nav>
+  <div class="header-actions"><a class="servers-link" href="#servers" data-page="home">SERVERS <span>⌄</span></a><button class="btn btn-small btn-red" data-modal="signin">Sign In</button></div>
+</header>
+
+<main>
+<section class="page active" id="page-home" data-page-panel="home">
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <div class="hero-kicker"><i></i> WELCOME TO VANDAL</div>
+      <div class="hero-logo">VAN<span>DAL</span></div>
+      <p class="hero-subtitle">Premium Rust Console Edition Servers</p>
+      <div class="online-pill"><i></i> Players Online: <strong id="total-online">--</strong></div>
+      <div class="hero-buttons"><button class="btn btn-red" data-modal="link">↗ &nbsp; LINK ACCOUNT</button><a class="btn btn-discord" href="https://discord.com/" target="_blank" rel="noreferrer">◉ &nbsp; JOIN DISCORD</a></div>
     </div>
-  </header>
-
-  <main>
-    <section class="hero" id="home">
-      <div class="hero-stripe stripe-one"></div><div class="hero-stripe stripe-two"></div>
-      <div class="hero-content">
-        <div class="hero-kicker"><i></i> WELCOME TO VANDAL</div>
-        <div class="hero-logo">VAN<span>DAL</span></div>
-        <p class="hero-subtitle">Premium Rust Console Edition Servers</p>
-        <div class="online-pill"><i></i> Players Online: <strong id="total-online">0</strong></div>
-        <div class="hero-buttons">
-          <button class="btn btn-red" data-modal="link">↗ &nbsp; LINK ACCOUNT</button>
-          <a class="btn btn-discord" href="https://discord.com/" target="_blank" rel="noreferrer">◉ &nbsp; JOIN DISCORD</a>
-        </div>
-      </div>
-      <div class="hero-bottom-fade"></div>
-    </section>
-
-    <section class="servers-section section-wrap" id="servers">
-      <div class="section-heading"><h2>OUR <span>SERVERS</span></h2><p>Live player counts across all regions</p></div>
-      <div class="server-grid">
-        <article class="server-card">
-          <div class="server-region">EU</div>
-          <div class="server-main">
-            <div class="server-title-row"><h3>EU 2X</h3><span class="status"><i></i> Online</span></div>
-            <div class="server-location">Europe</div>
-            <div class="players-row"><span>Players</span><strong><b id="server-online">0</b><em>/100</em></strong></div>
-            <div class="progress"><span id="population-bar"></span></div>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="offers-section section-wrap" id="offers">
-      <div class="section-heading"><h2>WHAT <span>WE OFFER</span></h2><p>Everything you need for the best Rust Console experience</p></div>
-      <div class="offer-grid">
-        <a class="offer-card" id="store" href="#store"><span class="offer-icon">▣</span><div><h3>In-Game Shop</h3><p>VIP packages, resource packs, and more delivered directly to your in-game inventory.</p></div></a>
-        <a class="offer-card" id="gems" href="#gems"><span class="offer-icon">◇</span><div><h3>Gem System</h3><p>Earn gems while you play, spend them on exclusive items, and compete on the gem leaderboard.</p></div></a>
-        <a class="offer-card" id="kits" href="#kits"><span class="offer-icon">▱</span><div><h3>Daily Kits</h3><p>Claim free daily kits based on your rank. Higher tiers unlock better rewards.</p></div></a>
-        <a class="offer-card" id="clans" href="#clans"><span class="offer-icon">⬡</span><div><h3>Clan System</h3><p>Create and manage your clan, track members, and dominate the leaderboards together.</p></div></a>
-        <a class="offer-card" id="leaderboard" href="#leaderboard"><span class="offer-icon">♜</span><div><h3>Leaderboards</h3><p>Compete for the top spot across kills, playtime, and more. Real-time stat tracking.</p></div></a>
-        <a class="offer-card" id="inventory" href="#inventory"><span class="offer-icon">▤</span><div><h3>Player Inventory</h3><p>Connect your account and keep track of your available rewards and items.</p></div></a>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-brand"><a class="brand" href="#home"><span class="brand-mark">V</span><span>VAN<span class="red">DAL</span></span></a><p>Built for the VANDAL community.</p></div>
-      <div class="footer-column"><h4>SOCIALS</h4><a href="https://discord.com/" target="_blank" rel="noreferrer">◉ Discord</a><a href="#">▶ YouTube</a><a href="#">♪ TikTok</a><a href="#">𝕏 Twitter</a></div>
-      <div class="footer-column"><h4>NAVIGATION</h4><a href="#store">Store</a><a href="#inventory">Profile</a><a href="#gems">Gems</a><a href="#servers">Servers</a></div>
-      <div class="footer-column"><h4>LEGAL</h4><a href="#">Terms</a><a href="#">Privacy</a></div>
+  </section>
+  <section class="servers-section section-wrap" id="servers">
+    <div class="section-heading"><h2>OUR <span>SERVERS</span></h2><p>Live player count for the VANDAL EU 2X server</p></div>
+    <div class="server-grid"><article class="server-card"><div class="server-region">EU</div><div class="server-main"><div class="server-title-row"><h3>EU 2X</h3><span class="status"><i></i> Status pending</span></div><div class="server-location">Europe</div><div class="players-row"><span>Players</span><strong><b id="server-online">--</b><em>/100</em></strong></div><div class="progress"><span id="population-bar"></span></div></div></article></div>
+  </section>
+  <section class="offers-section section-wrap"><div class="section-heading"><h2>WHAT <span>WE OFFER</span></h2><p>Everything you need for the best Rust Console experience</p></div>
+    <div class="offer-grid">
+      <button class="offer-card" data-page="store"><span class="offer-icon">▣</span><div><h3>In-Game Shop</h3><p>VIP packages, resource packs, and more delivered directly to your in-game inventory.</p></div></button>
+      <button class="offer-card" data-page="gems"><span class="offer-icon">◇</span><div><h3>Gem System</h3><p>Earn gems while you play and spend them on exclusive items.</p></div></button>
+      <button class="offer-card" data-page="inventory"><span class="offer-icon">▱</span><div><h3>Daily Kits</h3><p>Claim available kits and rewards from your inventory.</p></div></button>
+      <button class="offer-card" data-page="clans"><span class="offer-icon">⬡</span><div><h3>Clan System</h3><p>Create and manage your clan and play together.</p></div></button>
+      <button class="offer-card" data-page="leaderboard"><span class="offer-icon">♜</span><div><h3>Leaderboards</h3><p>Compete for the top spot across VANDAL server stats.</p></div></button>
+      <button class="offer-card" data-page="inventory"><span class="offer-icon">▤</span><div><h3>Player Inventory</h3><p>Connect your account and keep track of available rewards.</p></div></button>
     </div>
-    <div class="copyright"><span class="brand-mini">V<span>ANDAL</span></span><span>© 2026 Vandal. All rights reserved.</span></div>
-  </footer>
+  </section>
+</section>
 
-  <dialog id="site-modal" class="site-modal">
-    <form method="dialog"><button class="modal-close" aria-label="Close">×</button></form>
-    <div class="modal-mark">V</div>
-    <h2 id="modal-title">VANDAL ACCOUNT</h2>
-    <p id="modal-copy">Account sign-in will be connected when the authentication backend is configured.</p>
-    <a class="btn btn-red modal-action" href="https://discord.com/" target="_blank" rel="noreferrer">CONTINUE WITH DISCORD</a>
-    <small>This is a front-end preview. No account details are collected.</small>
-  </dialog>
-  <script src="script.js"></script>
-</body>
-</html>
+<section class="page" id="page-clans" data-page-panel="clans">
+  <div class="subnav server-tabs"><button class="subtab selected">▤ &nbsp; EU 2X</button></div>
+  <section class="content-page clans-page">
+    <div class="left-heading"><h1>CLANS</h1><p>Create or join a clan to dominate the servers together</p></div>
+    <div class="section-toolbar"><h2>♟ &nbsp; ALL CLANS</h2><button class="btn btn-red" data-modal="clan">⇥ &nbsp; JOIN CLAN</button></div>
+    <div class="empty-state"><div class="empty-icon">▤</div><h3>No clans to display yet</h3><p>Clans created on VANDAL EU 2X will appear here.</p></div>
+  </section>
+</section>
+
+<section class="page" id="page-leaderboard" data-page-panel="leaderboard">
+  <div class="subnav server-tabs"><button class="subtab selected">▤ &nbsp; EU 2X</button></div>
+  <section class="content-page leaderboard-page">
+    <div class="stats-grid">
+      <article class="stat-card"><span>Total Players</span><strong class="gold">—</strong></article>
+      <article class="stat-card"><span>Total Kills</span><strong class="red-text">—</strong></article>
+      <article class="stat-card"><span>Total Deaths</span><strong>—</strong></article>
+      <article class="stat-card"><span>Total Playtime</span><strong class="blue">—</strong></article>
+    </div>
+    <div class="podium-placeholder"><div class="empty-icon">🏆</div><h2>VANDAL LEADERBOARD</h2><p>Player rankings will appear here when your server statistics API is connected.</p></div>
+    <div class="ranking-panel"><div class="ranking-head"><h2>☷ &nbsp; Top Players</h2><span>Awaiting VANDAL stats</span></div><div class="ranking-empty">No player statistics loaded yet.</div></div>
+  </section>
+</section>
+
+<section class="page" id="page-inventory" data-page-panel="inventory">
+  <div class="subnav server-tabs"><button class="subtab selected">▤ &nbsp; EU 2X</button></div>
+  <section class="content-page inventory-page">
+    <div class="center-heading"><h1>YOUR INVENTORY</h1><p>Everything you own — claim it here while you're in game</p><small>Ranks can be claimed every 12 hours · Ranks last 28 days · Packs are a single claim</small></div>
+    <div class="inventory-tabs"><button class="pill-tab active" data-inventory="free">♙ &nbsp; Free Kits</button><button class="pill-tab booster" data-inventory="booster">🚀 &nbsp; Booster</button><button class="pill-tab purchased" data-inventory="purchased">♙ &nbsp; Purchased</button></div>
+    <div class="inventory-section"><h2 class="green-title">♙ &nbsp; <span id="inventory-title">FREE KITS</span></h2><div class="empty-state compact"><div class="empty-icon">▱</div><h3>Nothing here yet</h3><p>Your available items will appear here once inventory is connected.</p></div></div>
+  </section>
+</section>
+
+<section class="page" id="page-gems" data-page-panel="gems">
+  <section class="content-page gems-page">
+    <div class="gem-symbol">◇</div><h1>GEMS</h1><p class="muted">Earn gems by playing, buy more, and spend them in the store.</p>
+    <div class="balance-card"><span>YOUR BALANCE</span><strong>◇ —</strong><small>Gem balance will load when connected.</small></div>
+    <div class="gem-actions">
+      <button class="gem-action"><b>▣</b><strong>Shop</strong><small>Spend your gems</small></button>
+      <button class="gem-action"><b>⊕</b><strong>Buy Gems</strong><small>Get more gems</small></button>
+      <button class="gem-action"><b>🏆</b><strong>Leaderboard</strong><small>Top gem earners</small></button>
+      <button class="gem-action"><b>↶</b><strong>History</strong><small>Your transactions</small></button>
+      <button class="gem-action"><b>🎲</b><strong>Casino</strong><small>Coming soon</small></button>
+    </div>
+  </section>
+</section>
+
+<section class="page" id="page-store" data-page-panel="store">
+  <div class="subnav store-tabs"><button class="subtab selected" data-store="vip">♛ &nbsp; VIP</button><button class="subtab" data-store="packs">▱ &nbsp; PACKS</button><button class="subtab" data-store="kits">⚒ &nbsp; KITS</button><button class="subtab" data-store="cart">🛒 &nbsp; CART <span id="cart-count"></span></button></div>
+  <section class="content-page store-page">
+    <div class="store-category" data-store-panel="vip"><div class="category-title"><span>♛</span><h2>VIP</h2></div><div class="product-grid">
+      <article class="product-card"><span class="product-ribbon">BESTSELLER</span><h3>VIP</h3><ul><li>VIP Queue Access</li><li>Priority Server Access</li><li>VIP Role in Discord</li><li>Valid For A Month</li></ul><div class="purchase-switch"><button class="chosen">SUBSCRIPTION</button><button>ONE TIME</button></div><div class="price-label">PRICE</div><strong class="price">£4.99<small>/mo</small></strong><button class="btn product-add" data-product="VIP">ADD TO CART</button></article>
+    </div></div>
+    <div class="store-category hidden" data-store-panel="packs"><div class="category-title"><span>▱</span><h2>PACKS</h2></div><div class="product-grid">
+      <article class="product-card"><h3>CHARCOAL PACK</h3><p>• One-time purchase</p><button class="contents-button">◉ &nbsp; View Contents</button><div class="price-label">PRICE</div><strong class="price">£2.99</strong><button class="btn product-add" data-product="Charcoal Pack">ADD TO CART</button></article>
+      <article class="product-card"><h3>BACKPACK PACK</h3><p>• One-time purchase</p><button class="contents-button">◉ &nbsp; View Contents</button><div class="price-label">PRICE</div><strong class="price">£2.99</strong><button class="btn product-add" data-product="Backpack Pack">ADD TO CART</button></article>
+      <article class="product-card"><h3>TURRET PACK</h3><p>• One-time purchase</p><button class="contents-button">◉ &nbsp; View Contents</button><div class="price-label">PRICE</div><strong class="price">£4.99</strong><button class="btn product-add" data-product="Turret Pack">ADD TO CART</button></article>
+    </div></div>
+    <div class="store-category hidden" data-store-panel="kits"><div class="category-title"><span>⚒</span><h2>KITS</h2></div><div class="empty-state compact"><div class="empty-icon">▱</div><h3>No kits added yet</h3><p>You can add your products and kits later through your admin panel.</p></div></div>
+    <div class="store-category hidden" data-store-panel="cart"><div class="category-title"><span>🛒</span><h2>CART</h2></div><div class="cart-items empty-state compact"><div class="empty-icon">🛒</div><h3>Your cart is empty</h3><p>Products you add will appear here.</p></div></div>
+
+    <section class="supporters-section">
+      <div class="category-title"><span>🏆</span><h2>TOP SUPPORTERS</h2></div>
+      <div class="supporters-panel"><div class="period-tabs"><button class="period-tab active">DAILY</button><button class="period-tab">WEEKLY</button><button class="period-tab">MONTHLY</button><button class="period-tab">ALL TIME</button></div>
+        <div class="supporters-empty"><div class="empty-icon">🏆</div><p>No purchases yet for this period</p><small>Be the first to show your support!</small></div>
+      </div>
+    </section>
+  </section>
+</section>
+</main>
+
+<footer class="site-footer"><div class="footer-inner">
+  <div class="footer-brand"><a class="brand" href="#home" data-page="home"><span class="brand-mark">V</span><span>VAN<span class="red">DAL</span></span></a><p>Built for the VANDAL community.</p></div>
+  <div class="footer-column"><h4>SOCIALS</h4><a href="https://discord.com/" target="_blank" rel="noreferrer">◉ Discord</a><a href="#">▶ YouTube</a><a href="#">♪ TikTok</a><a href="#">𝕏 Twitter</a></div>
+  <div class="footer-column"><h4>NAVIGATION</h4><a href="#store" data-page="store">Store</a><a href="#inventory" data-page="inventory">Profile</a><a href="#gems" data-page="gems">Gems</a><a href="#servers" data-page="home">Servers</a></div>
+  <div class="footer-column"><h4>LEGAL</h4><a href="#">Terms</a><a href="#">Privacy</a></div>
+</div><div class="copyright"><span class="brand-mini">V<span>ANDAL</span></span><span>© 2026 Vandal. All rights reserved.</span></div></footer>
+
+<dialog id="site-modal" class="site-modal"><form method="dialog"><button class="modal-close" aria-label="Close">×</button></form><div class="modal-mark">V</div><h2 id="modal-title">VANDAL ACCOUNT</h2><p id="modal-copy">Account features will be connected when the backend is configured.</p><a class="btn btn-red modal-action" href="https://discord.com/" target="_blank" rel="noreferrer">CONTINUE WITH DISCORD</a><small>This is a front-end preview. No account details are collected.</small></dialog>
+<script src="script.js"></script>
+</body></html>
