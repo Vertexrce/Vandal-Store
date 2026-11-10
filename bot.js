@@ -14,10 +14,14 @@ async function startDiscordBot(token) {
 
   client.once(Events.ClientReady, readyClient => {
     console.log(`[VANDAL BOT] Online as ${readyClient.user.tag}`);
-    readyClient.user.setPresence({
-      status: 'online',
-      activities: [{ name: 'VANDAL Store', type: 0 }]
-    }).catch(error => console.error('[VANDAL BOT] Presence update failed:', error.message));
+    try {
+      readyClient.user.setPresence({
+        status: 'online',
+        activities: [{ name: 'VANDAL Store', type: 0 }]
+      });
+    } catch (error) {
+      console.error('[VANDAL BOT] Presence update failed:', error.message);
+    }
   });
 
   client.on(Events.Error, error => {
