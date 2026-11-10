@@ -52,7 +52,10 @@ const modalCopy=document.querySelector('#modal-copy');
 document.querySelectorAll('[data-modal]').forEach(button=>button.addEventListener('click',()=>{
   const kind=button.dataset.modal;
   modalTitle.textContent=kind==='link'?'LINK YOUR ACCOUNT':kind==='clan'?'JOIN A CLAN':'SIGN IN TO VANDAL';
-  modalCopy.textContent=kind==='link'?'Account linking will be enabled after the game-account and backend integration is configured.':kind==='clan'?'Clan applications will be enabled when the VANDAL clan system is connected.':'Discord sign-in will be enabled after OAuth is configured for your VANDAL application.';
+  modalCopy.textContent=kind==='link'?'Game account linking will be available when the VANDAL game integration is connected.':kind==='clan'?'Clan applications will be enabled when the VANDAL clan system is connected.':'Sign in securely with your Discord account to access your VANDAL profile.';
   modal.showModal();
 }));
 modal?.addEventListener('click',e=>{if(e.target===modal)modal.close();});
+
+// Show the admin link only when the backend verifies the configured Discord role.
+fetch('/api/me',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(me=>{if(!me||!me.signedIn)return;const actions=document.querySelector('.header-actions');if(me.isAdmin&&actions&&!actions.querySelector('[data-admin-link]')){const a=document.createElement('a');a.href='/admin';a.dataset.adminLink='true';a.className='servers-link';a.textContent='ADMIN';actions.insertBefore(a,actions.firstChild);}const sign=document.querySelector('.header-actions [data-modal="signin"]');if(sign)sign.textContent=me.user.username;}).catch(()=>{});

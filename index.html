@@ -9,6 +9,7 @@
 <meta name="description" content="VANDAL Rust Console Edition community and EU 2X server.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -16,12 +17,12 @@
   <a class="brand" href="#home" data-page="home"><span class="brand-mark">V</span><span>VAN<span class="red">DAL</span></span></a>
   <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button>
   <nav class="main-nav" aria-label="Main navigation">
-    <a class="active" href="#home" data-page="home"><span>⌂</span> Home</a>
-    <a href="#store" data-page="store"><span>▣</span> Store</a>
-    <a href="#clans" data-page="clans"><span>♟</span> Clans</a>
-    <a href="#leaderboard" data-page="leaderboard"><span>🏆</span> Leaderboard</a>
-    <a href="#inventory" data-page="inventory"><span>▤</span> Inventory</a>
-    <a href="#gems" data-page="gems"><span>◇</span> Gems</a>
+    <a class="active" href="#home" data-page="home"><i class="fa-solid fa-house nav-icon" aria-hidden="true"></i> Home</a>
+    <a href="#store" data-page="store"><i class="fa-solid fa-shop nav-icon" aria-hidden="true"></i> Store</a>
+    <a href="#clans" data-page="clans"><i class="fa-solid fa-users nav-icon" aria-hidden="true"></i> Clans</a>
+    <a href="#leaderboard" data-page="leaderboard"><i class="fa-solid fa-trophy nav-icon" aria-hidden="true"></i> Leaderboard</a>
+    <a href="#inventory" data-page="inventory"><i class="fa-solid fa-boxes-stacked nav-icon" aria-hidden="true"></i> Inventory</a>
+    <a href="#gems" data-page="gems"><i class="fa-solid fa-gem nav-icon" aria-hidden="true"></i> Gems</a>
   </nav>
   <div class="header-actions"><a class="servers-link" href="#servers" data-page="home">SERVERS <span>⌄</span></a><button class="btn btn-small btn-red" data-modal="signin">Sign In</button></div>
 </header>
@@ -34,7 +35,7 @@
       <div class="hero-logo">VAN<span>DAL</span></div>
       <p class="hero-subtitle">Premium Rust Console Edition Servers</p>
       <div class="online-pill"><i></i> Players Online: <strong id="total-online">--</strong></div>
-      <div class="hero-buttons"><button class="btn btn-red" data-modal="link">↗ &nbsp; LINK ACCOUNT</button><a class="btn btn-discord" href="https://discord.com/" target="_blank" rel="noreferrer">◉ &nbsp; JOIN DISCORD</a></div>
+      <div class="hero-buttons"><button class="btn btn-red" data-modal="link">↗ &nbsp; LINK ACCOUNT</button><a class="btn btn-discord" href="https://discord.gg/playvandal" target="_blank" rel="noreferrer">◉ &nbsp; JOIN DISCORD</a></div>
     </div>
   </section>
   <section class="servers-section section-wrap" id="servers">
@@ -125,11 +126,11 @@
 
 <footer class="site-footer"><div class="footer-inner">
   <div class="footer-brand"><a class="brand" href="#home" data-page="home"><span class="brand-mark">V</span><span>VAN<span class="red">DAL</span></span></a><p>Built for the VANDAL community.</p></div>
-  <div class="footer-column"><h4>SOCIALS</h4><a href="https://discord.com/" target="_blank" rel="noreferrer">◉ Discord</a><a href="#">▶ YouTube</a><a href="#">♪ TikTok</a><a href="#">𝕏 Twitter</a></div>
+  <div class="footer-column"><h4>SOCIALS</h4><a href="https://discord.gg/playvandal" target="_blank" rel="noreferrer">◉ Discord</a><a href="#">▶ YouTube</a><a href="#">♪ TikTok</a><a href="#">𝕏 Twitter</a></div>
   <div class="footer-column"><h4>NAVIGATION</h4><a href="#store" data-page="store">Store</a><a href="#inventory" data-page="inventory">Profile</a><a href="#gems" data-page="gems">Gems</a><a href="#servers" data-page="home">Servers</a></div>
   <div class="footer-column"><h4>LEGAL</h4><a href="#">Terms</a><a href="#">Privacy</a></div>
 </div><div class="copyright"><span class="brand-mini">V<span>ANDAL</span></span><span>© 2026 Vandal. All rights reserved.</span></div></footer>
 
-<dialog id="site-modal" class="site-modal"><form method="dialog"><button class="modal-close" aria-label="Close">×</button></form><div class="modal-mark">V</div><h2 id="modal-title">VANDAL ACCOUNT</h2><p id="modal-copy">Account features will be connected when the backend is configured.</p><a class="btn btn-red modal-action" href="https://discord.com/" target="_blank" rel="noreferrer">CONTINUE WITH DISCORD</a><small>This is a front-end preview. No account details are collected.</small></dialog>
+<dialog id="site-modal" class="site-modal"><form method="dialog"><button class="modal-close" aria-label="Close">×</button></form><div class="modal-mark">V</div><h2 id="modal-title">VANDAL ACCOUNT</h2><p id="modal-copy">Account features will be connected when the backend is configured.</p><a class="btn btn-red modal-action" href="/auth/discord">CONTINUE WITH DISCORD</a><small>Secure sign-in powered by Discord OAuth2.</small></dialog>
 <script src="script.js"></script>
 </body></html>
