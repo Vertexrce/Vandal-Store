@@ -2,6 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -15,10 +16,89 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
 const ACCOUNTS_FILE = path.join(DATA_DIR, 'accounts.json');
 
+
+// Persist Express sessions on the Railway volume so logins survive restarts.
+class PersistentFileStore extends session.Store {
+  constructor(directory) {
+    super();
+    this.directory = directory;
+    fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+    this.reaper = setInterval(() => this.reapExpired(), 60 * 60 * 1000);
+    this.reaper.unref?.();
+  }
+
+  fileFor(sessionId) {
+    const id = crypto.createHash('sha256').update(sessionId).digest('hex');
+    return path.join(this.directory, `${id}.json`);
+  }
+
+  get(sessionId, callback) {
+    const done = typeof callback === 'function' ? callback : () => {};
+    const file = this.fileFor(sessionId);
+    fs.readFile(file, 'utf8', (error, contents) => {
+      if (error) return done(error.code === 'ENOENT' ? null : error, null);
+      let stored;
+      try { stored = JSON.parse(contents); }
+      catch (parseError) { return done(parseError, null); }
+      const expiresAt = stored.cookie?.expires ? Date.parse(stored.cookie.expires) : null;
+      if (Number.isFinite(expiresAt) && expiresAt <= Date.now()) {
+        return fs.unlink(file, unlinkError => done(unlinkError && unlinkError.code !== 'ENOENT' ? unlinkError : null, null));
+      }
+      done(null, stored);
+    });
+  }
+
+  set(sessionId, stored, callback) {
+    const done = typeof callback === 'function' ? callback : () => {};
+    const file = this.fileFor(sessionId);
+    const temporary = `${file}.${process.pid}.${crypto.randomBytes(8).toString('hex')}.tmp`;
+    fs.writeFile(temporary, JSON.stringify(stored), { encoding: 'utf8', mode: 0o600 }, error => {
+      if (error) return done(error);
+      fs.rename(temporary, file, renameError => {
+        if (renameError) return fs.unlink(temporary, () => done(renameError));
+        done(null);
+      });
+    });
+  }
+
+  touch(sessionId, stored, callback) {
+    this.set(sessionId, stored, callback);
+  }
+
+  destroy(sessionId, callback) {
+    const done = typeof callback === 'function' ? callback : () => {};
+    fs.unlink(this.fileFor(sessionId), error => done(error && error.code !== 'ENOENT' ? error : null));
+  }
+
+  reapExpired() {
+    fs.readdir(this.directory, (error, files) => {
+      if (error) return;
+      const now = Date.now();
+      for (const name of files) {
+        if (!name.endsWith('.json')) continue;
+        const file = path.join(this.directory, name);
+        fs.readFile(file, 'utf8', (readError, contents) => {
+          if (readError) return;
+          try {
+            const stored = JSON.parse(contents);
+            const expiresAt = stored.cookie?.expires ? Date.parse(stored.cookie.expires) : null;
+            if (Number.isFinite(expiresAt) && expiresAt <= now) fs.unlink(file, () => {});
+          } catch {
+            fs.unlink(file, () => {});
+          }
+        });
+      }
+    });
+  }
+}
+
+const sessionStore = new PersistentFileStore(path.join(DATA_DIR, 'sessions'));
+
 if (!process.env.SESSION_SECRET) console.warn('WARNING: SESSION_SECRET is not set. Set a long random value in Railway.');
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '100kb' }));
 app.use(session({
+  store: sessionStore,
   name: 'vandal.sid',
   secret: process.env.SESSION_SECRET || 'development-only-change-this-secret',
   resave: false,

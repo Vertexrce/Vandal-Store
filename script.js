@@ -64,7 +64,7 @@ fetch('/api/me',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(me
   const name=me.displayName||me.user.username;
   accountTrigger.dataset.signedIn='true';
   accountTrigger.removeAttribute('data-modal');
-  accountTrigger.innerHTML=`<span class="account-avatar">${me.user.avatar?`<img src="https://cdn.discordapp.com/avatars/${encodeURIComponent(me.user.id)}/${encodeURIComponent(me.user.avatar)}.png?size=64" alt="">`:'♙'}</span><span id="account-trigger-name"></span>⌄`;
+  accountTrigger.innerHTML=`<span class="account-avatar">${me.user.avatar?`<img src="https://cdn.discordapp.com/avatars/${encodeURIComponent(me.user.id)}/${encodeURIComponent(me.user.avatar)}.png?size=64" alt="">`: '♙'}</span><span id="account-trigger-name"></span><span class="account-caret" aria-hidden="true">⌄</span>`;
   accountTrigger.querySelector('#account-trigger-name').textContent=name;
   document.querySelector('#account-menu-name').textContent=name;
   if(me.isAdmin)document.querySelector('#account-admin-link')?.classList.remove('hidden');

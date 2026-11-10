@@ -30,7 +30,7 @@ Do not commit the bot token, client secret, or session secret to GitHub. The Dis
 
 After signing in, a user with role `1569519586166972497` in guild `1565095830560575508` gets an **ADMIN** link and can open `/admin`. All admin API routes re-check the role with Discord, so hiding the link is not the security boundary. Other signed-in users cannot use the dashboard APIs.
 
-The dashboard includes product creation and deletion for VIP, Packs, and Kits. Product records (`products.json`) and Discord-to-gamertag links (`accounts.json`) are stored in `DATA_DIR` (`/data` in this setup). In Railway, attach a Volume to this service and mount it at `/data` so both survive container replacement/redeploys.
+The dashboard includes product creation and deletion for VIP, Packs, and Kits. Product records (`products.json`), Discord-to-gamertag links (`accounts.json`), and login sessions (`sessions/`) are stored in `DATA_DIR` (`/data` in this setup). In Railway, attach a Volume to this service and mount it at `/data`, and set `DATA_DIR=/data`, so logins survive restarts and redeploys. Keep the same `SESSION_SECRET` in Railway Variables across deploys; changing it invalidates existing login cookies.
 
 ## Local run
 

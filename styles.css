@@ -4,3 +4,95 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}/* Discord-linked account menu */
 .account-menu{position:relative}.account-trigger{display:inline-flex;align-items:center;gap:9px;background:#111113;border:1px solid #29292d;color:#f4f4f5;border-radius:24px;padding:0 14px;min-height:40px;cursor:pointer;font-weight:700}.account-avatar{width:25px;height:25px;border-radius:50%;overflow:hidden;background:#29292d;display:grid;place-items:center}.account-avatar img{width:100%;height:100%;object-fit:cover}.account-dropdown{position:absolute;right:0;top:calc(100% + 9px);width:230px;background:#111113;border:1px solid #29292d;border-radius:10px;box-shadow:0 16px 45px #000b;overflow:hidden;z-index:50}.account-dropdown-head{padding:16px;border-bottom:1px solid #29292d;display:flex;flex-direction:column;gap:5px}.account-dropdown-head small{font-size:11px;color:#858b96}.account-dropdown-head strong{font-size:15px}.account-dropdown>a,.account-dropdown .logout-link{display:block;width:100%;padding:13px 16px;background:none;border:0;text-align:left;color:#c8cbd1;font-size:14px;cursor:pointer}.account-dropdown>a:hover,.account-dropdown .logout-link:hover{background:#202024;color:#fff}.account-dropdown .logout-link{color:#ff626b;border-top:1px solid #29292d}.link-account-form{text-align:left;margin-top:18px}.link-account-form label,.profile-card label{display:block;color:#aeb3bd;font-size:11px;font-weight:800;letter-spacing:.6px;margin-bottom:9px}.link-account-form input,.profile-gamertag-row input{width:100%;background:#19191b;border:1px solid #51401b;color:#fff;padding:15px;border-radius:5px;outline:none}.link-account-form input:focus,.profile-gamertag-row input:focus{border-color:#e4b33f}.form-notice{min-height:18px;color:#e4b33f;font-size:12px}.profile-body{background:#090909}.profile-header{position:sticky}.profile-nav{display:flex;align-items:center;gap:25px;color:#aeb0b7;font-size:14px;font-weight:600}.profile-nav a:hover{color:#e4b33f}.profile-user-trigger{font-size:14px}.profile-main{width:min(900px,calc(100% - 36px));margin:55px auto 70px;display:flex;flex-direction:column;gap:32px}.profile-hero-card,.profile-card{background:#111113;border:1px solid #242428;border-radius:9px;padding:32px}.profile-hero-card{min-height:185px;display:flex;align-items:center;gap:25px}.profile-avatar{width:96px;height:96px;border-radius:50%;border:4px solid #e4b33f;overflow:hidden;display:grid;place-items:center;background:#242428;font-family:Orbitron,sans-serif;font-size:36px;color:#e4b33f}.profile-avatar img{width:100%;height:100%;object-fit:cover}.profile-hero-card h1{font-size:30px;margin:0 0 8px;overflow-wrap:anywhere}.profile-hero-card p{color:#9da8b6;margin:0 0 8px}.linked-status{font-size:10px;color:#e4b33f;font-weight:800;letter-spacing:1px}.profile-card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}.profile-card h2,.danger-card h2{font-size:23px;color:#e4b33f;margin:0 0 25px}.profile-card-title h2{margin:0}.edit-profile{border:0;background:none;color:#e4b33f;font-size:24px;cursor:pointer}.profile-gamertag-row{display:flex;gap:12px}.profile-gamertag-row input{min-height:60px;font-size:17px}.profile-help{color:#858b96;font-size:12px;margin:12px 0 0}.account-info .info-row{display:flex;justify-content:space-between;gap:15px;padding:18px 0;border-bottom:1px solid #242428;color:#aeb3bd}.account-info .info-row:last-child{border:0}.account-info .info-row strong{color:#fff;text-align:right;overflow-wrap:anywhere}.danger-card{background:#160d0e;border:1px solid #651b25;border-radius:9px;padding:32px}.danger-card h2{color:#ff626b;margin-bottom:18px}.danger-card p{color:#aeb3bd;font-size:14px}.profile-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:20px}.admin-profile-button{background:#242024;border:1px solid #e4b33f;color:#e4b33f}.logout-button{background:#d71932;color:white;min-width:160px}.profile-header .header-actions{gap:14px}
 @media(max-width:760px){.profile-nav{display:none}.profile-main{margin-top:25px}.profile-hero-card,.profile-card,.danger-card{padding:22px}.profile-hero-card{gap:16px}.profile-avatar{width:76px;height:76px;flex:0 0 76px}.profile-hero-card h1{font-size:21px}.account-info .info-row{font-size:12px}.account-info .info-row strong{max-width:58%}.profile-header .servers-link{display:none}}
+
+
+/* Compact gold-and-charcoal header controls, matching the supplied reference. */
+.servers-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #e4b33f;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+.servers-link:hover { color: #f1c75d; }
+.servers-link span {
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+}
+.account-menu { display: flex; align-items: center; }
+.account-trigger {
+  min-height: 40px;
+  padding: 0 12px 0 9px;
+  gap: 9px;
+  background: #101011;
+  border: 1px solid #29292d;
+  border-radius: 24px;
+  color: #f4f4f5;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  box-shadow: none;
+  transition: background .16s ease, border-color .16s ease;
+}
+.account-trigger:hover {
+  transform: none;
+  box-shadow: none;
+  background: #151516;
+  border-color: #404044;
+}
+.account-trigger:focus-visible,
+.servers-link:focus-visible {
+  outline: 2px solid #e4b33f;
+  outline-offset: 3px;
+}
+.account-avatar {
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #29292d;
+}
+#account-trigger-name {
+  max-width: 145px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-caret {
+  color: #a6a6ab;
+  font-size: 12px;
+  line-height: 1;
+  margin-left: 1px;
+}
+.account-dropdown {
+  background: #101011;
+  border-color: #29292d;
+  border-radius: 11px;
+}
+.account-dropdown > a,
+.account-dropdown .logout-link { transition: background .14s ease, color .14s ease; }
+@media (max-width: 760px) {
+  .header-actions { gap: 14px; }
+  .servers-link { font-size: 12px; }
+  #account-trigger-name { max-width: 100px; }
+}
+
+/* Use crisp chevrons instead of font-dependent arrow glyphs. */
+.servers-link span,
+.account-caret {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  font-size: 0;
+  line-height: 0;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  margin-top: -3px;
+}
