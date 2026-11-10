@@ -18,13 +18,14 @@
   <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button>
   <nav class="main-nav" aria-label="Main navigation">
     <a class="active" href="#home" data-page="home"><i class="fa-solid fa-house nav-icon" aria-hidden="true"></i> Home</a>
+    <a class="mobile-servers-link" href="#servers" data-page="home" data-scroll-servers="true"><i class="fa-solid fa-server nav-icon" aria-hidden="true"></i> Servers</a>
     <a href="#store" data-page="store"><i class="fa-solid fa-shop nav-icon" aria-hidden="true"></i> Store</a>
     <a href="#clans" data-page="clans"><i class="fa-solid fa-users nav-icon" aria-hidden="true"></i> Clans</a>
     <a href="#leaderboard" data-page="leaderboard"><i class="fa-solid fa-trophy nav-icon" aria-hidden="true"></i> Leaderboard</a>
     <a href="#inventory" data-page="inventory"><i class="fa-solid fa-boxes-stacked nav-icon" aria-hidden="true"></i> Inventory</a>
     <a href="#gems" data-page="gems"><i class="fa-solid fa-gem nav-icon" aria-hidden="true"></i> Gems</a>
   </nav>
-  <div class="header-actions"><a class="servers-link" href="#servers" data-page="home">SERVERS <span>⌄</span></a><div class="account-menu" id="account-menu"><button class="account-trigger btn btn-small" id="account-trigger" data-modal="signin">Sign In <span class="account-caret" aria-hidden="true">⌄</span></button><div class="account-dropdown hidden" id="account-dropdown"><div class="account-dropdown-head"><small>SIGNED IN AS</small><strong id="account-menu-name">Guest</strong></div><a href="/profile">♙ &nbsp; My Profile</a><a href="#inventory" data-page="inventory">▤ &nbsp; My Purchases</a><a href="#store" data-page="store">⟳ &nbsp; Subscriptions</a><a href="/admin" id="account-admin-link" class="hidden">⚙ &nbsp; Admin Panel</a><button id="account-logout" class="logout-link">⏻ &nbsp; Logout</button></div></div></div>
+  <div class="header-actions"><div class="servers-menu"><button class="servers-link" id="servers-trigger" type="button" aria-haspopup="true" aria-expanded="false">SERVERS <span aria-hidden="true">⌄</span></button><div class="servers-dropdown hidden" id="servers-dropdown" role="menu"><div class="servers-dropdown-title">CONFIGURED SERVERS</div><div id="servers-dropdown-list"><span class="servers-dropdown-empty">Loading servers…</span></div></div></div><div class="account-menu" id="account-menu"><button class="account-trigger btn btn-small" id="account-trigger" data-modal="signin">Sign In <span class="account-caret" aria-hidden="true">⌄</span></button><div class="account-dropdown hidden" id="account-dropdown"><div class="account-dropdown-head"><small>SIGNED IN AS</small><strong id="account-menu-name">Guest</strong></div><a href="/profile">♙ &nbsp; My Profile</a><a href="#inventory" data-page="inventory">▤ &nbsp; My Purchases</a><a href="#store" data-page="store">⟳ &nbsp; Subscriptions</a><a href="/admin" id="account-admin-link" class="hidden">⚙ &nbsp; Admin Panel</a><button id="account-logout" class="logout-link">⏻ &nbsp; Logout</button></div></div></div>
 </header>
 
 <main>
@@ -39,8 +40,8 @@
     </div>
   </section>
   <section class="servers-section section-wrap" id="servers">
-    <div class="section-heading"><h2>OUR <span>SERVERS</span></h2><p>Live player count for the VANDAL EU 2X server</p></div>
-    <div class="server-grid"><article class="server-card"><div class="server-region">EU</div><div class="server-main"><div class="server-title-row"><h3>EU 2X</h3><span class="status"><i></i> Status pending</span></div><div class="server-location">Europe</div><div class="players-row"><span>Players</span><strong><b id="server-online">--</b><em>/100</em></strong></div><div class="progress"><span id="population-bar"></span></div></div></article></div>
+    <div class="section-heading"><h2>OUR <span>SERVERS</span></h2><p>Live player counts and queue status for VANDAL servers</p></div>
+    <div class="server-grid" id="server-grid"><div class="server-empty">Server population will appear here once a server is configured.</div></div>
   </section>
   <section class="offers-section section-wrap"><div class="section-heading"><h2>WHAT <span>WE OFFER</span></h2><p>Everything you need for the best Rust Console experience</p></div>
     <div class="offer-grid">
@@ -105,13 +106,13 @@
   <section class="content-page store-page">
     <div class="store-category" data-store-panel="vip"><div class="category-title"><span>♛</span><h2>VIP</h2></div><div class="product-grid">
       <article class="product-card"><span class="product-ribbon">BESTSELLER</span><h3>VIP</h3><ul><li>VIP Queue Access</li><li>Priority Server Access</li><li>VIP Role in Discord</li><li>Valid For A Month</li></ul><div class="purchase-switch"><button class="chosen">SUBSCRIPTION</button><button>ONE TIME</button></div><div class="price-label">PRICE</div><strong class="price">£4.99<small>/mo</small></strong><button class="btn product-add" data-product="VIP">ADD TO CART</button></article>
-    </div></div>
+    </div><div class="product-grid managed-products hidden" id="managed-products-vip"></div></div>
     <div class="store-category hidden" data-store-panel="packs"><div class="category-title"><span>▱</span><h2>PACKS</h2></div><div class="product-grid">
       <article class="product-card"><h3>CHARCOAL PACK</h3><p>• One-time purchase</p><button class="contents-button">◉ &nbsp; View Contents</button><div class="price-label">PRICE</div><strong class="price">£2.99</strong><button class="btn product-add" data-product="Charcoal Pack">ADD TO CART</button></article>
       <article class="product-card"><h3>BACKPACK PACK</h3><p>• One-time purchase</p><button class="contents-button">◉ &nbsp; View Contents</button><div class="price-label">PRICE</div><strong class="price">£2.99</strong><button class="btn product-add" data-product="Backpack Pack">ADD TO CART</button></article>
       <article class="product-card"><h3>TURRET PACK</h3><p>• One-time purchase</p><button class="contents-button">◉ &nbsp; View Contents</button><div class="price-label">PRICE</div><strong class="price">£4.99</strong><button class="btn product-add" data-product="Turret Pack">ADD TO CART</button></article>
-    </div></div>
-    <div class="store-category hidden" data-store-panel="kits"><div class="category-title"><span>⚒</span><h2>KITS</h2></div><div class="empty-state compact"><div class="empty-icon">▱</div><h3>No kits added yet</h3><p>You can add your products and kits later through your admin panel.</p></div></div>
+    </div><div class="product-grid managed-products hidden" id="managed-products-packs"></div></div>
+    <div class="store-category hidden" data-store-panel="kits"><div class="category-title"><span>⚒</span><h2>KITS</h2></div><div class="empty-state compact" id="kits-empty"><div class="empty-icon">▱</div><h3>No kits added yet</h3><p>You can add your products and kits later through your admin panel.</p></div><div class="product-grid managed-products hidden" id="managed-products-kits"></div></div>
     <div class="store-category hidden" data-store-panel="cart"><div class="category-title"><span>🛒</span><h2>CART</h2></div><div class="cart-items empty-state compact"><div class="empty-icon">🛒</div><h3>Your cart is empty</h3><p>Products you add will appear here.</p></div></div>
 
     <section class="supporters-section">

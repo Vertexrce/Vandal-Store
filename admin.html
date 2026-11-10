@@ -1,3 +1,248 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090909"><title>VANDAL Admin</title><link rel="icon" href="https://cdn.discordapp.com/icons/1565095830560575508/a_4b5fa855aede16ba64fee789a3316fa3.webp?size=256&amp;animated=true"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>
-*{box-sizing:border-box}body{margin:0;background:#090909;color:#f5f5f5;font-family:Inter,Arial,sans-serif}.top{height:76px;border-bottom:1px solid #292126;display:flex;align-items:center;justify-content:space-between;padding:0 5%;background:#050505;position:sticky;top:0}.brand{font:900 24px Orbitron;color:#f31a39;text-decoration:none}.top a.back{color:#aaa;text-decoration:none;font-size:13px}.wrap{max-width:1200px;margin:0 auto;padding:42px 24px}.eyebrow{color:#ed1834;font-weight:800;letter-spacing:2px;font-size:11px}.heading{display:flex;justify-content:space-between;align-items:end;gap:20px;margin:8px 0 30px}.heading h1{font:900 clamp(28px,4vw,40px) Orbitron;margin:8px 0}.heading p{color:#858b96;margin:0}.profile{font-size:13px;color:#aaa}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:30px}.card,.panel{background:#121214;border:1px solid #29272b;border-radius:12px;padding:22px}.card span{color:#9298a2;font-size:12px}.card strong{display:block;font-size:25px;margin-top:12px}.panel h2{font:700 17px Orbitron;margin:0 0 20px}.form{display:grid;grid-template-columns:1.2fr 1fr 1fr 2fr auto;gap:10px}.field{width:100%;background:#080809;border:1px solid #333038;border-radius:7px;color:white;padding:13px;font:13px Inter}.btn{border:0;border-radius:7px;background:linear-gradient(120deg,#f21a39,#b70c27);color:#fff;font-weight:800;padding:0 20px;min-height:44px;cursor:pointer}.hint{color:#7f8590;font-size:12px;line-height:1.6;margin:14px 0 0}.items{margin-top:18px;display:grid;gap:10px}.item{display:flex;justify-content:space-between;align-items:center;gap:15px;background:#0a0a0b;border:1px solid #28252a;border-radius:8px;padding:14px}.item small{display:block;color:#858b96;margin-top:5px}.delete{background:#241014;border:1px solid #702030;color:#ff6a7d;border-radius:6px;padding:9px 12px;cursor:pointer}.notice{color:#ff7b8b;font-size:13px;min-height:20px;margin-top:12px}@media(max-width:800px){.cards{grid-template-columns:1fr}.form{grid-template-columns:1fr 1fr}.form .wide{grid-column:1/-1}.heading{align-items:start;flex-direction:column}}
-</style></head><body><header class="top"><a class="brand" href="/#home">VANDAL / ADMIN</a><a class="back" href="/#home">← Back to website</a></header><main class="wrap"><div class="eyebrow">CONTROL PANEL</div><div class="heading"><div><h1>Admin Dashboard</h1><p>Manage the VANDAL store catalogue.</p></div><div class="profile" id="profile">Checking Discord access…</div></div><section class="cards"><article class="card"><span>Admin access</span><strong style="color:#28d17c">Verified</strong></article><article class="card"><span>Discord server</span><strong>VANDAL</strong></article><article class="card"><span>Store products</span><strong id="product-count">—</strong></article></section><section class="panel"><h2>ADD STORE ITEM</h2><form class="form" id="product-form"><input class="field" name="name" placeholder="Item name" maxlength="80" required><select class="field" name="category"><option value="VIP">VIP</option><option value="Packs">Packs</option><option value="Kits">Kits</option></select><input class="field" name="price" placeholder="Price (e.g. £4.99)" required><input class="field wide" name="description" placeholder="Short description (optional)" maxlength="500"><button class="btn" type="submit">ADD ITEM</button></form><p class="hint">Products are saved to the server's /data directory. Attach a Railway Volume mounted at /data to keep them after redeploys.</p><div class="notice" id="notice" role="status"></div><div class="items" id="items"></div></section></main><script src="admin.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#090909">
+  <title>VANDAL Admin Dashboard</title>
+  <link rel="icon" href="https://cdn.discordapp.com/icons/1565095830560575508/a_4b5fa855aede16ba64fee789a3316fa3.webp?size=256&amp;animated=true">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box}
+    :root{color-scheme:dark;--red:#ed1834;--red2:#b70c27;--muted:#8b909a;--line:#28262b;--panel:#121214}
+    body{margin:0;background:#090909;color:#f5f5f5;font-family:Inter,Arial,sans-serif}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .shell{min-height:100vh;display:grid;grid-template-columns:238px minmax(0,1fr)}
+    .sidebar{position:sticky;top:0;height:100vh;background:#060606;border-right:1px solid var(--line);padding:25px 16px;display:flex;flex-direction:column}
+    .brand{font:900 20px Orbitron,sans-serif;color:#fff;text-decoration:none;letter-spacing:.4px;padding:4px 12px 28px}
+    .brand span{color:var(--red)}
+    .nav-label{color:#636873;font-size:10px;font-weight:800;letter-spacing:1.8px;padding:10px 12px}
+    .side-nav{display:grid;gap:5px}
+    .side-nav button{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:1px solid transparent;border-radius:8px;background:transparent;color:#a8abb3;text-align:left;font-size:13px;font-weight:700}
+    .side-nav button:hover{background:#151214;color:#fff}
+    .side-nav button.selected{background:#211014;border-color:#54202b;color:#fff}
+    .side-nav .icon{width:19px;text-align:center;color:var(--red);font-size:15px}
+    .sidebar-bottom{margin-top:auto;border-top:1px solid #242226;padding:17px 12px 0;color:#7d828c;font-size:11px;line-height:1.6}
+    .sidebar-bottom a{color:#c0c2c9;text-decoration:none}
+    .main{min-width:0}
+    .topbar{height:70px;border-bottom:1px solid #252328;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,4vw,42px);background:#0a0a0b}
+    .top-title{font-weight:700;font-size:13px;color:#a6a8af}
+    .top-actions{display:flex;align-items:center;gap:15px}
+    .profile{font-size:12px;color:#b6b7bc}
+    .back{color:#f1f1f1;text-decoration:none;font-size:12px;border:1px solid #343138;border-radius:7px;padding:9px 12px}
+    .back:hover{border-color:var(--red);color:#fff}
+    .content{max-width:1440px;margin:auto;padding:34px clamp(18px,4vw,42px) 55px}
+    .view{display:none}
+    .view.active{display:block}
+    .eyebrow{color:var(--red);font-weight:800;letter-spacing:2px;font-size:10px}
+    h1,h2,h3,p{margin-top:0}
+    h1{font:800 clamp(25px,3vw,36px) Orbitron,sans-serif;line-height:1.3;margin:8px 0 8px}
+    h2{font:700 16px Orbitron,sans-serif;margin:0 0 17px}
+    h3{font-size:14px}
+    .lead{color:#90949e;font-size:13px;line-height:1.6;margin:0}
+    .heading-row{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:27px}
+    .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:20px}
+    .card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:11px}
+    .card{padding:17px 18px;min-height:100px}
+    .card span{display:block;color:#969ba5;font-size:11px}
+    .card strong{display:block;font-size:23px;margin-top:11px}
+    .good{color:#39d990}
+    .muted{color:var(--muted)}
+    .panel{padding:21px;margin-bottom:18px}
+    .panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:17px}
+    .panel-head h2{margin:0}
+    .hint{color:#818691;font-size:11px;line-height:1.6;margin:12px 0 0}
+    .notice{color:#c4c6cc;font-size:12px;min-height:18px;margin:12px 0 0}
+    .notice.error{color:#ff7b8b}
+    .notice.success{color:#48d995}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .form-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .field-wrap{display:flex;flex-direction:column;gap:7px}
+    .field-wrap label{font-size:11px;color:#a4a7af;font-weight:700}
+    .field{min-width:0;width:100%;background:#09090a;border:1px solid #353239;border-radius:7px;color:#f6f6f7;padding:12px 13px;font-size:12px;outline:none}
+    .field:focus{border-color:#a32438;box-shadow:0 0 0 2px #ed18341a}
+    textarea.field{min-height:110px;resize:vertical}
+    .button-row{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:14px}
+    .btn{min-height:40px;padding:0 16px;background:linear-gradient(120deg,#f21a39,#b70c27);border:0;border-radius:7px;color:#fff;font-size:11px;font-weight:800;letter-spacing:.3px}
+    .btn.secondary{background:#1b1a1d;border:1px solid #38353d;color:#e4e5e8}
+    .btn.danger{background:#271015;border:1px solid #622330;color:#ff8794}
+    .btn:disabled{opacity:.55;cursor:wait}
+    .list{display:grid;gap:9px;margin-top:16px}
+    .list-item{display:flex;justify-content:space-between;align-items:center;gap:15px;background:#0a0a0b;border:1px solid #29272c;border-radius:8px;padding:13px}
+    .list-item strong{display:block;font-size:12px}
+    .list-item small{display:block;color:#858a94;font-size:10px;margin-top:5px;overflow-wrap:anywhere}
+    .empty{border:1px dashed #39353d;border-radius:8px;padding:22px;color:#8d929d;font-size:12px;text-align:center}
+    .server-card{border:1px solid #302c33;border-radius:9px;padding:15px;background:#0c0c0d}
+    .server-card-top{display:flex;justify-content:space-between;gap:15px}
+    .server-card h3{margin:0}
+    .server-card p{color:#8d929d;font-size:11px;margin:6px 0 0;overflow-wrap:anywhere}
+    .tag{border:1px solid #3b3438;border-radius:20px;padding:4px 8px;color:#b4b7bf;font-size:10px;white-space:nowrap}
+    .tag.online{border-color:#145d3b;color:#44d995}
+    .message-list{display:grid;gap:9px}
+    .message{border:1px solid #2b292f;background:#0a0a0b;border-radius:8px;padding:12px}
+    .message-head{display:flex;justify-content:space-between;gap:12px;color:#8f949d;font-size:10px;margin-bottom:7px}
+    .message-head strong{color:#dddfe3;font-size:11px}
+    .message-body{font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;color:#d1d3d8}
+    .embed{border-left:2px solid var(--red);padding:8px 10px;margin-top:8px;background:#121113}
+    .embed strong{font-size:11px}
+    .embed p{color:#c1c3c9;font-size:11px;line-height:1.5;white-space:pre-wrap;margin:5px 0 0}
+    .embed-field{margin-top:7px}
+    .embed-field b{font-size:10px;color:#aaa}
+    .embed-field div{font-size:10px;color:#c1c3c9;white-space:pre-wrap;margin-top:3px}
+    .console-output{background:#050505;border:1px solid #28262c;border-radius:8px;min-height:170px;padding:15px;color:#c5f6d7;font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+    .mobile-menu{display:none}
+    @media(max-width:1050px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.shell{grid-template-columns:205px minmax(0,1fr)}}
+    @media(max-width:720px){
+      .shell{display:block}
+      .sidebar{position:fixed;z-index:20;left:0;top:0;width:240px;transform:translateX(-102%);transition:transform .2s}
+      .sidebar.open{transform:translateX(0)}
+      .mobile-menu{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid #38353d;border-radius:7px;background:#111;color:#fff}
+      .topbar{height:62px}
+      .top-title{display:none}
+      .content{padding-top:25px}
+      .heading-row{align-items:flex-start;flex-direction:column}
+      .form-grid,.form-grid.three{grid-template-columns:1fr}
+    }
+    @media(max-width:460px){.cards{grid-template-columns:1fr 1fr;gap:8px}.card{padding:13px;min-height:88px}.card strong{font-size:19px}.panel{padding:15px}.profile{display:none}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="/#home">VAN<span>DAL</span> / ADMIN</a>
+      <div class="nav-label">DASHBOARD</div>
+      <nav class="side-nav" aria-label="Admin sections">
+        <button class="selected" data-tab="home"><span class="icon">⌂</span>Home</button>
+        <button data-tab="store"><span class="icon">▣</span>Store</button>
+        <button data-tab="rcon"><span class="icon">⌘</span>RCON</button>
+        <button data-tab="discord"><span class="icon">◉</span>Discord</button>
+        <button data-tab="clans"><span class="icon">♟</span>Clans</button>
+      </nav>
+      <div class="sidebar-bottom">Signed in through Discord.<br><a href="/#home">Return to VANDAL website →</a></div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <div class="top-actions">
+          <button class="mobile-menu" id="mobile-menu" aria-label="Open dashboard menu" aria-expanded="false">☰</button>
+          <span class="top-title">VANDAL COMMUNITY CONTROL PANEL</span>
+        </div>
+        <div class="top-actions"><span class="profile" id="profile">Verifying Discord access…</span><a class="back" href="/#home">← Website</a></div>
+      </header>
+      <main class="content">
+        <section class="view active" data-view="home">
+          <div class="eyebrow">OVERVIEW</div>
+          <div class="heading-row"><div><h1>Welcome, <span id="welcome-name">Discord user</span> to VANDAL Admin Dashboard</h1><p class="lead">Live status for the website, configured game servers, and Discord community.</p></div></div>
+          <div class="cards">
+            <article class="card"><span>Admin access</span><strong class="good" id="admin-access">Verified</strong></article>
+            <article class="card"><span>Discord server</span><strong id="guild-name">VANDAL</strong></article>
+            <article class="card"><span>Store products</span><strong id="product-count">—</strong></article>
+            <article class="card"><span>Discord members</span><strong id="member-count">—</strong></article>
+            <article class="card"><span>Staff with dashboard access</span><strong id="staff-count">—</strong></article>
+            <article class="card"><span>Players online</span><strong id="players-online">—</strong></article>
+            <article class="card"><span>Online Discord users</span><strong id="discord-online">—</strong></article>
+          </div>
+          <section class="panel">
+            <div class="panel-head"><h2>CONFIGURED SERVERS</h2><button class="btn secondary" data-open-tab="rcon">Manage servers</button></div>
+            <div class="list" id="home-servers"><div class="empty">Loading configured server status…</div></div>
+            <p class="hint notice" id="overview-note">Discord member and presence counts are approximate values returned by Discord.</p>
+          </section>
+        </section>
+
+        <section class="view" data-view="store">
+          <div class="eyebrow">CATALOGUE</div>
+          <div class="heading-row"><div><h1>Store</h1><p class="lead">Products added here are also returned by the public website store API.</p></div></div>
+          <section class="panel">
+            <h2>ADD A STORE PRODUCT</h2>
+            <form id="product-form">
+              <div class="form-grid three">
+                <div class="field-wrap"><label for="product-name">Product name</label><input class="field" id="product-name" name="name" maxlength="80" required></div>
+                <div class="field-wrap"><label for="product-category">Category</label><select class="field" id="product-category" name="category"><option>VIP</option><option>Packs</option><option>Kits</option></select></div>
+                <div class="field-wrap"><label for="product-price">Price</label><input class="field" id="product-price" name="price" placeholder="e.g. £4.99" maxlength="40" required></div>
+                <div class="field-wrap" style="grid-column:1/-1"><label for="product-description">Description</label><input class="field" id="product-description" name="description" maxlength="500" placeholder="Optional short description"></div>
+              </div>
+              <div class="button-row"><button class="btn" type="submit">ADD PRODUCT</button></div>
+            </form>
+            <div class="notice" id="store-notice" role="status"></div>
+            <div class="list" id="product-list"><div class="empty">Loading products…</div></div>
+          </section>
+        </section>
+
+        <section class="view" data-view="rcon">
+          <div class="eyebrow">GAME SERVER CONTROL</div>
+          <div class="heading-row"><div><h1>RCON &amp; Servers</h1><p class="lead">Add the same WebRCON host, port, and password used by the game-server cog.</p></div></div>
+          <section class="panel">
+            <h2>CONFIGURE A SERVER</h2>
+            <form id="server-form">
+              <input type="hidden" name="id">
+              <div class="form-grid three">
+                <div class="field-wrap"><label for="server-name">Website server name</label><input class="field" id="server-name" name="name" maxlength="80" placeholder="VANDAL EU 2X" required></div>
+                <div class="field-wrap"><label for="server-region">Region</label><input class="field" id="server-region" name="region" maxlength="40" placeholder="EU"></div>
+                <div class="field-wrap"><label for="server-host">RCON hostname or IP</label><input class="field" id="server-host" name="host" maxlength="253" placeholder="server.example.com" required></div>
+                <div class="field-wrap"><label for="server-port">RCON port</label><input class="field" id="server-port" name="port" type="number" min="1" max="65535" placeholder="28016" required></div>
+                <div class="field-wrap"><label for="server-password">RCON password</label><input class="field" id="server-password" name="password" type="password" maxlength="512" autocomplete="new-password" placeholder="Stored privately on the server"></div>
+              </div>
+              <p class="hint">Passwords are stored in the server's private data directory and are never returned to the browser. Leave the password blank while editing to keep the current one.</p>
+              <div class="button-row"><button class="btn secondary" type="button" id="test-server">TEST RCON</button><button class="btn" type="submit">SAVE SERVER</button><button class="btn secondary" type="button" id="cancel-server-edit">CLEAR</button></div>
+            </form>
+            <div class="notice" id="server-notice" role="status"></div>
+            <div class="list" id="server-list"><div class="empty">Loading configured servers…</div></div>
+          </section>
+          <section class="panel">
+            <h2>RCON CONSOLE</h2>
+            <div class="form-grid">
+              <div class="field-wrap"><label for="rcon-server">Configured server</label><select class="field" id="rcon-server"></select></div>
+              <div class="field-wrap"><label for="rcon-command">Command</label><input class="field" id="rcon-command" maxlength="200" placeholder="serverinfo"></div>
+            </div>
+            <div class="button-row"><button class="btn secondary" type="button" data-command="serverinfo">SERVERINFO</button><button class="btn secondary" type="button" data-command="playerlist">PLAYERLIST</button><button class="btn secondary" type="button" data-command="status">STATUS</button><button class="btn" type="button" id="run-rcon">SEND COMMAND</button></div>
+            <p class="hint">Commands can change the game server. Review each command before sending; a confirmation is required.</p>
+            <div class="notice" id="rcon-notice" role="status"></div>
+            <pre class="console-output" id="rcon-output">RCON output will appear here.</pre>
+          </section>
+        </section>
+
+        <section class="view" data-view="discord">
+          <div class="eyebrow">COMMUNITY</div>
+          <div class="heading-row"><div><h1>Discord</h1><p class="lead">Member counts and recent messages from a channel the bot can read.</p></div><button class="btn secondary" id="refresh-discord">REFRESH</button></div>
+          <div class="cards">
+            <article class="card"><span>Discord members</span><strong id="discord-member-count">—</strong></article>
+            <article class="card"><span>Online Discord users</span><strong id="discord-online-count">—</strong></article>
+            <article class="card"><span>Staff with dashboard access</span><strong id="discord-staff-count">—</strong></article>
+            <article class="card"><span>Discord connection</span><strong id="discord-connection" class="muted">Checking…</strong></article>
+          </div>
+          <section class="panel">
+            <div class="panel-head"><h2>DISCORD LOG CHANNEL</h2></div>
+            <div class="form-grid">
+              <div class="field-wrap"><label for="discord-log-channel">Channel</label><select class="field" id="discord-log-channel"></select></div>
+              <div class="button-row" style="align-self:end;margin-top:0"><button class="btn" id="load-discord-messages" type="button">LOAD RECENT MESSAGES</button></div>
+            </div>
+            <div class="notice" id="discord-notice" role="status"></div>
+            <div class="message-list" id="discord-messages"><div class="empty">Choose a channel to load messages.</div></div>
+          </section>
+        </section>
+
+        <section class="view" data-view="clans">
+          <div class="eyebrow">CLAN SYSTEM</div>
+          <div class="heading-row"><div><h1>Clans</h1><p class="lead">Choose the channels used by the bot. The dashboard displays the latest active-clan panel and channel activity.</p></div></div>
+          <section class="panel">
+            <h2>CLAN CHANNELS</h2>
+            <div class="form-grid three">
+              <div class="field-wrap"><label for="active-clans-channel">Active clans panel</label><select class="field clan-channel" id="active-clans-channel"></select></div>
+              <div class="field-wrap"><label for="invite-channel">Clan invites</label><select class="field clan-channel" id="invite-channel"></select></div>
+              <div class="field-wrap"><label for="clan-logs-channel">Clan logs</label><select class="field clan-channel" id="clan-logs-channel"></select></div>
+            </div>
+            <div class="button-row"><button class="btn" id="save-clan-channels" type="button">SAVE CHANNELS</button><button class="btn secondary" id="refresh-clans" type="button">REFRESH ACTIVITY</button></div>
+            <div class="notice" id="clan-notice" role="status"></div>
+          </section>
+          <div class="form-grid three">
+            <section class="panel"><div class="panel-head"><h2>ACTIVE CLANS</h2></div><div class="message-list" id="active-clans-feed"><div class="empty">Choose an active-clans channel above.</div></div></section>
+            <section class="panel"><div class="panel-head"><h2>INVITE CHANNEL</h2></div><div class="message-list" id="invite-feed"><div class="empty">Choose an invite channel above.</div></div></section>
+            <section class="panel"><div class="panel-head"><h2>CLAN LOGS</h2></div><div class="message-list" id="clan-logs-feed"><div class="empty">Choose a clan logs channel above.</div></div></section>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="admin.js"></script>
+</body>
+</html>

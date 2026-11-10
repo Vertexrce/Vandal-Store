@@ -171,7 +171,9 @@ app.get('/auth/discord/callback', async (req, res) => {
       try { await refreshAdmin(req); }
       catch (e) { console.error('Initial role check failed:', e.message); }
     }
-    req.session.save(() => res.redirect(req.session.isAdmin ? '/admin' : '/#home'));
+    // All accounts land on the public homepage after OAuth. Admin access is
+    // still verified server-side and the dashboard link appears for staff.
+    req.session.save(() => res.redirect('/#home'));
   } catch (error) {
     console.error('Discord OAuth callback error:', error.message);
     res.status(500).send('Discord sign-in failed. Please return to VANDAL and try again.');
@@ -236,7 +238,7 @@ async function writeProducts(products) {
 app.get('/api/admin/products', requireAdmin, async (req, res) => res.json(await readProducts()));
 app.post('/api/admin/products', requireAdmin, async (req, res) => {
   const { name, category, price, description } = req.body || {};
-  if (![name, category, price].every(v => typeof v === 'string' && v.trim()) || name.length > 80 || description?.length > 500) return res.status(400).json({ error: 'Name, category and price are required. Keep the description under 500 characters.' });
+  if (![name, category, price].every(v => typeof v === 'string' && v.trim()) || name.length > 80 || description?.length > 500 || !['VIP', 'Packs', 'Kits'].includes(category)) return res.status(400).json({ error: 'Enter a name, one of the supported categories, and a price. Keep the description under 500 characters.' });
   const products = await readProducts();
   const product = { id: require('crypto').randomUUID(), name: name.trim(), category: category.trim(), price: price.trim(), description: String(description || '').trim(), createdAt: new Date().toISOString() };
   products.push(product); await writeProducts(products); res.status(201).json(product);
@@ -247,11 +249,29 @@ app.delete('/api/admin/products/:id', requireAdmin, async (req, res) => {
   if (next.length === products.length) return res.status(404).json({ error: 'Product not found.' });
   await writeProducts(next); res.json({ ok: true });
 });
+
+const { createDashboardApi } = require('./dashboard-api');
+createDashboardApi(app, {
+  DATA_DIR,
+  GUILD_ID,
+  ADMIN_ROLE_ID,
+  BOT_TOKEN,
+  requireAdmin,
+  readProducts
+});
+
 app.get('/admin', async (req, res, next) => {
   if (!req.session.user) return res.redirect('/auth/discord');
   try { if (!await refreshAdmin(req)) return res.status(403).send('Admin access requires the configured VANDAL Discord role. <a href="/#home">Return to VANDAL</a>'); }
   catch (e) { console.error('Admin page role check failed:', e.message); return res.status(503).send('Could not verify your Discord role. Please try again later.'); }
   res.sendFile(path.join(__dirname, 'admin.html'), err => { if (err) next(err); });
+});
+app.use((req, res, next) => {
+  const privateFiles = new Set(['server.js', 'bot.js', 'dashboard-api.js']);
+  if (privateFiles.has(path.basename(req.path)) || req.path === '/data' || req.path.startsWith('/data/')) {
+    return res.sendStatus(404);
+  }
+  next();
 });
 app.use(express.static(__dirname, { index: 'index.html', dotfiles: 'deny' }));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
