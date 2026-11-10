@@ -1,0 +1,22 @@
+VANDAL Discord channel-loading fix
+
+Updated files:
+- server.js
+  - Cache successful Discord admin-role lookups for 60 seconds.
+  - Deduplicate simultaneous role lookups for the same Discord user.
+  - Include Discord's Retry-After value in 429 error logs/messages when provided.
+- dashboard-api.js
+  - Deduplicate simultaneous Discord channel-list requests.
+  - Validate the Discord channel-list response before processing it.
+  - Include Discord's Retry-After value in API error messages.
+  - Removed a duplicate bot-token configuration check.
+- admin.js
+  - Do not display a successful clan-activity refresh when no clan channels are configured.
+
+Deployment:
+1. Replace the project files with the contents of this ZIP (or upload the updated project to the same Git repository).
+2. Keep your existing Railway environment variables and persistent volume.
+3. Redeploy on Railway.
+4. Open /admin and refresh the Discord/Clans views.
+
+The changes reduce repeated role and channel requests. They do not bypass Discord rate limits or guarantee channel access if the configured guild ID, bot token, bot membership, or Discord permissions are incorrect.

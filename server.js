@@ -110,20 +110,48 @@ function requireLogin(req, res, next) {
   if (!req.session.user) return res.status(401).json({ error: 'Please sign in with Discord first.' });
   next();
 }
+const ADMIN_ROLE_CACHE_TTL_MS = 60_000;
+const adminRoleCache = new Map();
+const adminRoleLookups = new Map();
+
 async function getGuildMember(userId) {
   if (!BOT_TOKEN) throw new Error('DISCORD_BOT_TOKEN is not configured');
   const response = await fetch(`https://discord.com/api/v10/guilds/${GUILD_ID}/members/${userId}`, {
     headers: { Authorization: `Bot ${BOT_TOKEN}` }
   });
   if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`Discord member lookup failed (${response.status})`);
+  if (!response.ok) {
+    const retryAfter = Number(response.headers.get('retry-after'));
+    const suffix = response.status === 429 && Number.isFinite(retryAfter) && retryAfter > 0
+      ? ` Retry after ${Math.ceil(retryAfter)} seconds.` : '';
+    throw new Error(`Discord member lookup failed (${response.status}).${suffix}`);
+  }
   return response.json();
 }
-async function refreshAdmin(req) {
+async function refreshAdmin(req, options = {}) {
   if (!req.session.user) return false;
-  const member = await getGuildMember(req.session.user.id);
-  req.session.isAdmin = Boolean(member && Array.isArray(member.roles) && member.roles.includes(ADMIN_ROLE_ID));
-  return req.session.isAdmin;
+  const userId = req.session.user.id;
+  const cacheKey = `${GUILD_ID}:${userId}`;
+  const cached = adminRoleCache.get(cacheKey);
+  if (!options.force && cached && Date.now() - cached.checkedAt < ADMIN_ROLE_CACHE_TTL_MS) {
+    req.session.isAdmin = cached.isAdmin;
+    req.session.adminRoleCheckedAt = cached.checkedAt;
+    return cached.isAdmin;
+  }
+  let lookup = adminRoleLookups.get(cacheKey);
+  if (!lookup) {
+    lookup = getGuildMember(userId).then(member => {
+      const isAdmin = Boolean(member && Array.isArray(member.roles) && member.roles.includes(ADMIN_ROLE_ID));
+      const entry = { isAdmin, checkedAt: Date.now() };
+      adminRoleCache.set(cacheKey, entry);
+      return entry;
+    }).finally(() => adminRoleLookups.delete(cacheKey));
+    adminRoleLookups.set(cacheKey, lookup);
+  }
+  const result = await lookup;
+  req.session.isAdmin = result.isAdmin;
+  req.session.adminRoleCheckedAt = result.checkedAt;
+  return result.isAdmin;
 }
 async function requireAdmin(req, res, next) {
   if (!req.session.user) return res.status(401).json({ error: 'Sign in with Discord to continue.' });

@@ -302,6 +302,10 @@ async function loadClanActivity() {
     [state.settings.inviteChannelId || $('#invite-channel').value, '#invite-feed'],
     [state.settings.logsChannelId || $('#clan-logs-channel').value, '#clan-logs-feed']
   ];
+  if (!entries.some(([channelId]) => channelId)) {
+    setNotice('#clan-notice', 'No clan channels are configured yet. Load the Discord channels above and select the channels you want to use.', 'error');
+    return;
+  }
   try {
     await Promise.all(entries.map(async ([channelId, selector]) => {
       await loadMessages(channelId, selector);

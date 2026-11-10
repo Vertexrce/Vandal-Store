@@ -215,6 +215,7 @@ function createDashboardApi(app, options) {
   const statusCache = new Map();
   let overviewCache = null;
   let channelsCache = null;
+  let channelsRequest = null;
 
   async function readJson(name, fallback) {
     await fs.promises.mkdir(DATA_DIR, { recursive: true, mode: 0o700 });
@@ -288,7 +289,10 @@ function createDashboardApi(app, options) {
     });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const error = new Error(body.message || `Discord API returned ${response.status}.`);
+      const retryAfter = Number(response.headers.get('retry-after'));
+      const retryMessage = response.status === 429 && Number.isFinite(retryAfter) && retryAfter > 0
+        ? ` Retry after ${Math.ceil(retryAfter)} seconds.` : '';
+      const error = new Error(`${body.message || `Discord API returned ${response.status}.`}${retryMessage}`);
       error.status = response.status;
       throw error;
     }
@@ -297,13 +301,19 @@ function createDashboardApi(app, options) {
 
   async function getGuildChannels(force = false) {
     if (!force && channelsCache && Date.now() - channelsCache.at < 60_000) return channelsCache.channels;
-    const channels = await discordRequest(`/guilds/${GUILD_ID}/channels`);
-    const textChannels = channels
-      .filter(channel => GUILD_CHANNEL_TYPES.has(channel.type))
-      .map(({ id, name, type, parent_id }) => ({ id, name, type, parentId: parent_id || null }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    channelsCache = { at: Date.now(), channels: textChannels };
-    return textChannels;
+    if (channelsRequest) return channelsRequest;
+    channelsRequest = (async () => {
+      const channels = await discordRequest(`/guilds/${GUILD_ID}/channels`);
+      if (!Array.isArray(channels)) throw new Error('Discord did not return a channel list.');
+      const textChannels = channels
+        .filter(channel => GUILD_CHANNEL_TYPES.has(channel.type))
+        .map(({ id, name, type, parent_id }) => ({ id, name, type, parentId: parent_id || null }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      channelsCache = { at: Date.now(), channels: textChannels };
+      return textChannels;
+    })();
+    try { return await channelsRequest; }
+    finally { channelsRequest = null; }
   }
 
   async function countStaffMembers() {
