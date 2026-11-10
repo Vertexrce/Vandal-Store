@@ -4,7 +4,15 @@
   "private": true,
   "description": "VANDAL Rust Console community website with Discord OAuth and role-gated admin dashboard",
   "main": "server.js",
-  "scripts": { "start": "node server.js" },
-  "dependencies": { "express": "^4.21.2", "express-session": "^1.18.1" },
-  "engines": { "node": ">=20" }
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "discord.js": "^14.19.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
 }

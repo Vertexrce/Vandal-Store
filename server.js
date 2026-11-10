@@ -8,11 +8,12 @@ const PORT = process.env.PORT || 8080;
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || `https://${process.env.RAILWAY_PUBLIC_DOMAIN || 'vandalrce.up.railway.app'}/auth/discord/callback`;
-const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
+const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || process.env.DISCORD_TOKEN || process.env.TOKEN;
 const GUILD_ID = process.env.DISCORD_GUILD_ID || '1565095830560575508';
 const ADMIN_ROLE_ID = process.env.DISCORD_ADMIN_ROLE_ID || '1569519586166972497';
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
+const ACCOUNTS_FILE = path.join(DATA_DIR, 'accounts.json');
 
 if (!process.env.SESSION_SECRET) console.warn('WARNING: SESSION_SECRET is not set. Set a long random value in Railway.');
 app.set('trust proxy', 1);
@@ -84,7 +85,7 @@ app.get('/auth/discord/callback', async (req, res) => {
     const userResponse = await fetch('https://discord.com/api/v10/users/@me', { headers: { Authorization: `Bearer ${tokenData.access_token}` } });
     const user = await userResponse.json();
     if (!userResponse.ok) throw new Error('Could not retrieve your Discord profile');
-    req.session.user = { id: user.id, username: user.global_name || user.username, discriminator: user.discriminator, avatar: user.avatar };
+    req.session.user = { id: user.id, username: user.global_name || user.username, discordUsername: user.username, discriminator: user.discriminator, avatar: user.avatar, createdAt: new Date(Number((BigInt(user.id) >> 22n) + 1420070400000n)).toISOString() };
     req.session.isAdmin = false;
     if (BOT_TOKEN) {
       try { await refreshAdmin(req); }
@@ -101,6 +102,15 @@ app.post('/auth/logout', (req, res) => req.session.destroy(() => {
   res.clearCookie('vandal.sid');
   res.json({ ok: true });
 }));
+async function readAccounts() {
+  await fs.promises.mkdir(DATA_DIR, { recursive: true });
+  try { return JSON.parse(await fs.promises.readFile(ACCOUNTS_FILE, 'utf8')); }
+  catch (e) { if (e.code === 'ENOENT') return {}; throw e; }
+}
+async function writeAccounts(accounts) {
+  await fs.promises.mkdir(DATA_DIR, { recursive: true });
+  await fs.promises.writeFile(ACCOUNTS_FILE, JSON.stringify(accounts, null, 2));
+}
 app.get('/api/me', async (req, res) => {
   if (!req.session.user) return res.json({ signedIn: false });
   let isAdmin = false;
@@ -109,8 +119,30 @@ app.get('/api/me', async (req, res) => {
     try { isAdmin = await refreshAdmin(req); }
     catch (e) { roleCheckAvailable = false; console.error('Role check failed:', e.message); }
   }
-  res.json({ signedIn: true, user: req.session.user, isAdmin, roleCheckAvailable });
+  const accounts = await readAccounts();
+  const account = accounts[req.session.user.id] || {};
+  res.json({ signedIn: true, user: req.session.user, account, displayName: account.gamertag || req.session.user.username, isAdmin, roleCheckAvailable });
 });
+app.post('/api/account/link', requireLogin, async (req, res) => {
+  const gamertag = String(req.body?.gamertag || '').trim();
+  if (gamertag.length < 2 || gamertag.length > 32 || !/^[a-zA-Z0-9 _.-]+$/.test(gamertag)) {
+    return res.status(400).json({ error: 'Enter a gamertag between 2 and 32 characters using letters, numbers, spaces, dots, underscores or hyphens.' });
+  }
+  const accounts = await readAccounts();
+  const normalized = gamertag.toLowerCase();
+  const alreadyUsed = Object.entries(accounts).some(([id, account]) => id !== req.session.user.id && account.gamertag && account.gamertag.toLowerCase() === normalized);
+  if (alreadyUsed) return res.status(409).json({ error: 'That gamertag is already linked to another website account.' });
+  accounts[req.session.user.id] = { ...(accounts[req.session.user.id] || {}), gamertag, linkedAt: new Date().toISOString(), linkStatus: 'unverified' };
+  await writeAccounts(accounts);
+  res.json({ ok: true, account: accounts[req.session.user.id], displayName: gamertag, verification: 'unverified' });
+});
+app.delete('/api/account/link', requireLogin, async (req, res) => {
+  const accounts = await readAccounts();
+  delete accounts[req.session.user.id];
+  await writeAccounts(accounts);
+  res.json({ ok: true });
+});
+app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
 
 async function readProducts() {
   await fs.promises.mkdir(DATA_DIR, { recursive: true });
@@ -144,4 +176,12 @@ app.get('/admin', async (req, res, next) => {
 app.use(express.static(__dirname, { index: 'index.html', dotfiles: 'deny' }));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-app.listen(PORT, '0.0.0.0', () => console.log(`VANDAL website listening on ${PORT}`));
+const { startDiscordBot } = require('./bot');
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`VANDAL website listening on ${PORT}`);
+  // Run the website and Discord bot in the same Railway service/process.
+  startDiscordBot(BOT_TOKEN).catch(error => {
+    console.error('[VANDAL BOT] Startup error:', error.message);
+  });
+});

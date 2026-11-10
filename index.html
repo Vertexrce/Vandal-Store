@@ -24,7 +24,7 @@
     <a href="#inventory" data-page="inventory"><i class="fa-solid fa-boxes-stacked nav-icon" aria-hidden="true"></i> Inventory</a>
     <a href="#gems" data-page="gems"><i class="fa-solid fa-gem nav-icon" aria-hidden="true"></i> Gems</a>
   </nav>
-  <div class="header-actions"><a class="servers-link" href="#servers" data-page="home">SERVERS <span>⌄</span></a><button class="btn btn-small btn-red" data-modal="signin">Sign In</button></div>
+  <div class="header-actions"><a class="servers-link" href="#servers" data-page="home">SERVERS <span>⌄</span></a><div class="account-menu" id="account-menu"><button class="account-trigger btn btn-small" id="account-trigger" data-modal="signin">Sign In <span>⌄</span></button><div class="account-dropdown hidden" id="account-dropdown"><div class="account-dropdown-head"><small>SIGNED IN AS</small><strong id="account-menu-name">Guest</strong></div><a href="/profile">♙ &nbsp; My Profile</a><a href="#inventory" data-page="inventory">▤ &nbsp; My Purchases</a><a href="#store" data-page="store">⟳ &nbsp; Subscriptions</a><a href="/admin" id="account-admin-link" class="hidden">⚙ &nbsp; Admin Panel</a><button id="account-logout" class="logout-link">⏻ &nbsp; Logout</button></div></div></div>
 </header>
 
 <main>
@@ -131,6 +131,6 @@
   <div class="footer-column"><h4>LEGAL</h4><a href="#">Terms</a><a href="#">Privacy</a></div>
 </div><div class="copyright"><span class="brand-mini">V<span>ANDAL</span></span><span>© 2026 Vandal. All rights reserved.</span></div></footer>
 
-<dialog id="site-modal" class="site-modal"><form method="dialog"><button class="modal-close" aria-label="Close">×</button></form><div class="modal-mark">V</div><h2 id="modal-title">VANDAL ACCOUNT</h2><p id="modal-copy">Account features will be connected when the backend is configured.</p><a class="btn btn-red modal-action" href="/auth/discord">CONTINUE WITH DISCORD</a><small>Secure sign-in powered by Discord OAuth2.</small></dialog>
+<dialog id="site-modal" class="site-modal"><form method="dialog"><button class="modal-close" aria-label="Close">×</button></form><div class="modal-mark">V</div><h2 id="modal-title">VANDAL ACCOUNT</h2><p id="modal-copy">Sign in securely with Discord to access your VANDAL profile.</p><form id="link-account-form" class="link-account-form hidden"><label for="gamertag-input">RUST CONSOLE GAMERTAG</label><input id="gamertag-input" name="gamertag" minlength="2" maxlength="32" required placeholder="Enter your in-game name"><button class="btn btn-red modal-action" type="submit">LINK ACCOUNT</button><p id="link-account-notice" class="form-notice" aria-live="polite"></p></form><a class="btn btn-red modal-action" id="discord-login-action" href="/auth/discord">CONTINUE WITH DISCORD</a><small id="modal-footnote">Secure sign-in powered by Discord OAuth2.</small></dialog>
 <script src="script.js"></script>
 </body></html>

@@ -11,7 +11,7 @@ Deploy this folder as a Docker service from GitHub. The Dockerfile runs the Expr
 | `DISCORD_CLIENT_ID` | Client ID from your Discord Developer Portal application |
 | `DISCORD_CLIENT_SECRET` | Client Secret from that application — keep private |
 | `DISCORD_REDIRECT_URI` | `https://vandalrce.up.railway.app/auth/discord/callback` |
-| `DISCORD_BOT_TOKEN` | Token for the VANDAL Store bot (keep private) |
+| `DISCORD_BOT_TOKEN` | Token for the VANDAL Store bot (keep private). The app also accepts `DISCORD_TOKEN` or `TOKEN` if that is the variable name you already used. |
 | `DISCORD_GUILD_ID` | `1565095830560575508` |
 | `DISCORD_ADMIN_ROLE_ID` | `1569519586166972497` |
 | `SESSION_SECRET` | A long, random secret string (32+ random bytes recommended) |
@@ -30,7 +30,7 @@ Do not commit the bot token, client secret, or session secret to GitHub. The Dis
 
 After signing in, a user with role `1569519586166972497` in guild `1565095830560575508` gets an **ADMIN** link and can open `/admin`. All admin API routes re-check the role with Discord, so hiding the link is not the security boundary. Other signed-in users cannot use the dashboard APIs.
 
-The first dashboard includes product creation and deletion for VIP, Packs, and Kits. Product records are JSON files in `DATA_DIR` (`/data` in this setup). In Railway, attach a Volume to this service and mount it at `/data` so product data survives container replacement/redeploys.
+The dashboard includes product creation and deletion for VIP, Packs, and Kits. Product records (`products.json`) and Discord-to-gamertag links (`accounts.json`) are stored in `DATA_DIR` (`/data` in this setup). In Railway, attach a Volume to this service and mount it at `/data` so both survive container replacement/redeploys.
 
 ## Local run
 
@@ -41,5 +41,10 @@ Requires Node.js 20+. Run `npm install` then set the environment variables and r
 - The public pages and VANDAL styling/banner are retained.
 - The site only displays EU 2X.
 - The leaderboard is a visual placeholder and does not pull Saturn player statistics.
-- Discord OAuth login and the role-gated admin dashboard are implemented. Game linking, live server population, checkout, inventory, clan functions and live leaderboard data still need their own integrations.
+- Discord OAuth login, a Discord-backed profile page, a basic gamertag entry/link flow, and the role-gated admin dashboard are implemented. The gamertag flow stores the name supplied by the signed-in user; it does not prove that the user owns that console account. To verify ownership, connect a Rust Console server plugin/RCON or another trusted game-account verification service. Live server population, checkout, inventory delivery, clan functions and live leaderboard data still need their own integrations.
 - Product admin records are currently stored for the dashboard; connecting them to the public Store page and a payment/delivery system is a separate integration.
+
+
+## Discord bot startup
+
+The website server starts the Discord bot automatically in the same Railway service. Install dependencies with `npm install` (the Dockerfile does this during deployment). Set the bot token in Railway Variables as `DISCORD_BOT_TOKEN` (recommended), `DISCORD_TOKEN`, or `TOKEN`. The bot needs to be invited to your Discord server and must be enabled in the Discord Developer Portal. Railway logs should show `[VANDAL BOT] Online as ...` when it connects. Do not put the token in website JavaScript, HTML, or GitHub.
