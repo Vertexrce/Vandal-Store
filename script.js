@@ -75,6 +75,9 @@ fetch('/api/me',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(me
 // The home-page link button opens a real gamertag form for signed-in users.
 document.querySelectorAll('[data-modal]').forEach(button=>button.addEventListener('click',()=>{
   const kind=button.dataset.modal;
+  // Signed-in account controls lose data-modal after /api/me resolves.
+  // Ignore this handler when no modal is currently assigned.
+  if(!kind)return;
   const form=document.querySelector('#link-account-form');
   const login=document.querySelector('#discord-login-action');
   const note=document.querySelector('#link-account-notice');
