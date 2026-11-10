@@ -24,3 +24,14 @@ Home, Store (VIP / Packs / Kits / Cart), Clans, Leaderboard, Inventory, Gems. **
 - Store products shown are visual examples/placeholders. Replace or populate them from your admin panel later.
 - Player population, account linking, Discord OAuth, clans, inventory, gem balance, supporter data, checkout, and purchases need your own backend/API integration before they become live features.
 - Replace the Discord invite and social/legal placeholder links before publishing.
+
+
+### Favicon
+The browser tab icon uses the VANDAL Discord server icon hosted on Discord CDN. The site references the image URL directly, so the browser needs an internet connection to load it. Some browsers may display only a static frame of animated WebP favicons.
+
+
+## Railway port fix
+The Dockerfile now uses an NGINX config template that listens on Railway's runtime
+`PORT` instead of hard-coding port 80. In Railway, remove any manually-set `PORT`
+variable unless you intentionally want a fixed port. If you set a Target Port in
+Networking, make it match the service's `PORT`.
