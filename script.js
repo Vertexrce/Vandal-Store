@@ -99,18 +99,49 @@ async function loadPublicServers(){
 loadPublicServers();
 setInterval(loadPublicServers,15000);
 
-const storeTabs=document.querySelectorAll('[data-store]');
-storeTabs.forEach(tab=>tab.addEventListener('click',()=>{
-  storeTabs.forEach(t=>t.classList.toggle('selected',t===tab));
-  document.querySelectorAll('[data-store-panel]').forEach(p=>p.classList.toggle('hidden',p.dataset.storePanel!==tab.dataset.store));
-}));
+document.addEventListener('click',event=>{
+  const tab=event.target.closest('[data-store]');
+  if(!tab)return;
+  document.querySelectorAll('[data-store]').forEach(t=>t.classList.toggle('selected',t===tab));
+  document.querySelectorAll('[data-store-panel]').forEach(panel=>panel.classList.toggle('hidden',panel.dataset.storePanel!==tab.dataset.store));
+});
 document.querySelectorAll('.period-tab').forEach(tab=>tab.addEventListener('click',()=>{
   document.querySelectorAll('.period-tab').forEach(t=>t.classList.toggle('active',t===tab));
 }));
-const inventoryNames={free:'FREE KITS',booster:'BOOSTER KITS',purchased:'RANKS & PACKS'};
+const inventoryNames={free:'FREE KITS',booster:'BOOSTER KITS',purchased:'PURCHASED KITS'};
+async function loadPurchasedKits(){
+  const target=document.querySelector('#inventory-items');
+  if(!target)return;
+  target.className='empty-state compact';
+  target.innerHTML='<p>Loading your purchased kits…</p>';
+  try{
+    const response=await fetch('/api/inventory',{credentials:'same-origin',cache:'no-store'});
+    if(response.status===401)throw new Error('Sign in with Discord to view your purchased kits.');
+    const body=await response.json();
+    if(!response.ok)throw new Error(body.error||'Could not load your inventory.');
+    const kits=Array.isArray(body.purchasedKits)?body.purchasedKits:[];
+    if(!kits.length){target.innerHTML='<div class="empty-icon">▱</div><h3>No purchased kits yet</h3><p>Kits granted to your linked account by an admin will appear here.</p>';return;}
+    target.className='inventory-kit-list';
+    target.replaceChildren();
+    kits.slice().reverse().forEach(kit=>{
+      const card=document.createElement('article');card.className='inventory-kit-card';
+      const title=document.createElement('h3');title.textContent=kit.name||'Store Kit';
+      const details=document.createElement('p');details.textContent=`In-game kit: ${kit.gameKit||'—'} · Server: ${kit.serverId||'—'}`;
+      const date=document.createElement('small');
+      const parsed=kit.grantedAt?new Date(kit.grantedAt):null;
+      date.textContent=parsed&&Number.isFinite(parsed.getTime())?`Granted ${parsed.toLocaleString()}`:'Grant date unavailable';
+      card.append(title,details,date);target.append(card);
+    });
+  }catch(error){target.innerHTML='';const message=document.createElement('p');message.textContent=error.message;target.append(message);}
+}
 document.querySelectorAll('[data-inventory]').forEach(tab=>tab.addEventListener('click',()=>{
   document.querySelectorAll('[data-inventory]').forEach(t=>t.classList.toggle('active',t===tab));
   document.querySelector('#inventory-title').textContent=inventoryNames[tab.dataset.inventory];
+  if(tab.dataset.inventory==='purchased')loadPurchasedKits();
+  else if(tab.dataset.inventory==='booster'){
+    const target=document.querySelector('#inventory-items');
+    if(target){target.className='empty-state compact';target.innerHTML='<div class="empty-icon">🚀</div><h3>Booster inventory</h3><p>Your Discord role gives you access to this tab. Booster kit claiming is not connected to the website yet.</p>';}
+  }
 }));
 document.querySelectorAll('.purchase-switch').forEach(group=>group.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
   group.querySelectorAll('button').forEach(x=>x.classList.toggle('chosen',x===b));
@@ -149,33 +180,48 @@ document.addEventListener('click',event=>{
 });
 
 async function loadManagedProducts(){
+  const root=document.querySelector('#store-categories');
+  if(!root)return;
   try{
-    const response=await fetch('/api/products',{cache:'no-store'});
+    const [response, meResponse]=await Promise.all([fetch('/api/products',{cache:'no-store'}),fetch('/api/me',{credentials:'same-origin',cache:'no-store'})]);
     if(!response.ok)return;
     const products=await response.json();
-    const grouped={vip:[],packs:[],kits:[]};
-    products.forEach(product=>{
-      const category=String(product.category||'').toLowerCase();
-      if(grouped[category])grouped[category].push(product);
-    });
-    Object.entries(grouped).forEach(([category,items])=>{
-      const target=document.querySelector(`#managed-products-${category}`);
-      if(!target)return;
-      target.replaceChildren();
-      target.classList.toggle('hidden',items.length===0);
-      items.forEach(product=>{
+    const me=meResponse.ok?await meResponse.json():{signedIn:false,roles:[]};
+    const roles=Array.isArray(me.roles)?me.roles:[];
+    const grouped=new Map();
+    products.forEach(product=>{const category=String(product.category||'Other').trim()||'Other';if(!grouped.has(category))grouped.set(category,[]);grouped.get(category).push(product);});
+    root.replaceChildren();
+    const tabs=document.querySelector('#store-tabs');
+    tabs.querySelectorAll('[data-generated-store]').forEach(node=>node.remove());
+    [...grouped.keys()].forEach((category,index)=>{
+      const key=`category-${index}`;
+      const tab=document.createElement('button');tab.className='subtab';tab.dataset.store=key;tab.dataset.generatedStore='true';tab.textContent=category.toUpperCase();
+      tabs.insertBefore(tab,tabs.querySelector('[data-store="cart"]'));
+      const section=document.createElement('section');section.className='store-category hidden';section.dataset.storePanel=key;
+      const heading=document.createElement('div');heading.className='category-title';const h2=document.createElement('h2');h2.textContent=category.toUpperCase();heading.append(h2);
+      const grid=document.createElement('div');grid.className='product-grid managed-products';
+      grouped.get(category).forEach(product=>{
         const card=document.createElement('article');card.className='product-card';
         const title=document.createElement('h3');title.textContent=product.name;
         const description=document.createElement('p');description.textContent=product.description||'Available from the VANDAL store.';
+        const billing=document.createElement('p');billing.textContent=product.billingType==='subscription'?'Subscription':'Lifetime / one-time';
         const priceLabel=document.createElement('div');priceLabel.className='price-label';priceLabel.textContent='PRICE';
-        const price=document.createElement('strong');price.className='price';price.textContent=product.price;
+        const price=document.createElement('strong');price.className='price';price.textContent=(product.monthlyPrice && product.lifetimePrice)?`Subscription: ${product.monthlyPrice} · Lifetime: ${product.lifetimePrice}`:(product.billingType==='subscription'?(product.monthlyPrice||product.price):(product.lifetimePrice||product.price));
+        card.append(title,description,billing);
+        if(product.contentFile){const contents=document.createElement('button');contents.className='contents-button';contents.type='button';contents.textContent='◉  View Contents';contents.addEventListener('click',()=>window.open(`/api/product-content/${encodeURIComponent(product.id)}`,'_blank','noopener'));card.append(contents);}
+        if(product.requiredRoleId){const roleNote=document.createElement('small');roleNote.textContent='Requires a specific Discord role';card.append(roleNote);}
+        card.append(priceLabel,price);
         const button=document.createElement('button');button.className='btn product-add';button.dataset.product=product.name;button.textContent='ADD TO CART';
-        card.append(title,description,priceLabel,price,button);target.append(card);
+        const hasRole=!product.requiredRoleId || roles.includes(product.requiredRoleId);
+        if(!hasRole){button.disabled=true;button.textContent='ROLE REQUIRED';button.title='You need the required Discord role to access this product.';}
+        card.append(button);grid.append(card);
       });
+      section.append(heading,grid);root.append(section);
     });
-    const hasKits=grouped.kits.length>0;
-    document.querySelector('#kits-empty')?.classList.toggle('hidden',hasKits);
-  }catch{}
+    if(!products.length)root.innerHTML='<div class="empty-state compact"><h3>No products available yet</h3><p>Store products configured by staff will appear here.</p></div>';
+    const firstTab=tabs.querySelector('[data-generated-store]');
+    if(firstTab){document.querySelectorAll('[data-store]').forEach(t=>t.classList.toggle('selected',t===firstTab));document.querySelectorAll('[data-store-panel]').forEach(p=>p.classList.toggle('hidden',p.dataset.storePanel!==firstTab.dataset.store));}
+  }catch{root.innerHTML='<div class="empty-state compact"><h3>Store products could not be loaded.</h3></div>';}
 }
 loadManagedProducts();
 
@@ -193,6 +239,8 @@ document.querySelector('#account-logout')?.addEventListener('click',async()=>{tr
 let currentMe=null;
 fetch('/api/me',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(me=>{
   currentMe=me;
+  const boosterTab=document.querySelector('[data-inventory=booster]');
+  if(boosterTab)boosterTab.classList.toggle('hidden',!me?.signedIn || Boolean(me.boosterRoleId && (!Array.isArray(me.roles) || !me.roles.includes(me.boosterRoleId))));
   if(!me||!me.signedIn)return;
   const name=me.displayName||me.user.username;
   accountTrigger.dataset.signedIn='true';

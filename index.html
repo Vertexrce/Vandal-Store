@@ -85,9 +85,9 @@
 <section class="page" id="page-inventory" data-page-panel="inventory">
   <div class="subnav server-tabs"><button class="subtab selected">▤ &nbsp; EU 2X</button></div>
   <section class="content-page inventory-page">
-    <div class="center-heading"><h1>YOUR INVENTORY</h1><p>Everything you own — claim it here while you're in game</p><small>Ranks can be claimed every 12 hours · Ranks last 28 days · Packs are a single claim</small></div>
-    <div class="inventory-tabs"><button class="pill-tab active" data-inventory="free">♙ &nbsp; Free Kits</button><button class="pill-tab booster" data-inventory="booster">🚀 &nbsp; Booster</button><button class="pill-tab purchased" data-inventory="purchased">♙ &nbsp; Purchased</button></div>
-    <div class="inventory-section"><h2 class="green-title">♙ &nbsp; <span id="inventory-title">FREE KITS</span></h2><div class="empty-state compact"><div class="empty-icon">▱</div><h3>Nothing here yet</h3><p>Your available items will appear here once inventory is connected.</p></div></div>
+    <div class="center-heading"><h1>YOUR INVENTORY</h1><p>Everything you own — claim it here while you're in game</p><small>Your available rewards and granted kits appear here</small></div>
+    <div class="inventory-tabs"><button class="pill-tab active" data-inventory="free">♙ &nbsp; Free Kits</button><button class="pill-tab booster hidden" data-inventory="booster">🚀 &nbsp; Booster</button><button class="pill-tab purchased" data-inventory="purchased">♙ &nbsp; Purchased Kits</button></div>
+    <div class="inventory-section"><h2 class="green-title">♙ &nbsp; <span id="inventory-title">FREE KITS</span></h2><div id="inventory-items" class="empty-state compact"><div class="empty-icon">▱</div><h3>Nothing here yet</h3><p>Your available items will appear here once inventory is connected.</p></div></div>
   </section>
 </section>
 
@@ -106,19 +106,10 @@
 </section>
 
 <section class="page" id="page-store" data-page-panel="store">
-  <div class="subnav store-tabs"><button class="subtab selected" data-store="vip">♛ &nbsp; VIP</button><button class="subtab" data-store="packs">▱ &nbsp; PACKS</button><button class="subtab" data-store="kits">⚒ &nbsp; KITS</button><button class="subtab" data-store="cart">🛒 &nbsp; CART <span id="cart-count"></span></button></div>
+  <div class="subnav store-tabs" id="store-tabs"><button class="subtab selected" data-store="all">STORE</button><button class="subtab" data-store="cart">🛒 &nbsp; CART <span id="cart-count"></span></button></div>
   <section class="content-page store-page">
-    <div class="store-category" data-store-panel="vip"><div class="category-title"><span>♛</span><h2>VIP</h2></div><div class="product-grid">
-      <article class="product-card"><span class="product-ribbon">BESTSELLER</span><h3>VIP</h3><ul><li>VIP Queue Access</li><li>Priority Server Access</li><li>VIP Role in Discord</li><li>Valid For A Month</li></ul><div class="purchase-switch"><button class="chosen">SUBSCRIPTION</button><button>ONE TIME</button></div><div class="price-label">PRICE</div><strong class="price">£4.99<small>/mo</small></strong><button class="btn product-add" data-product="VIP">ADD TO CART</button></article>
-    </div><div class="product-grid managed-products hidden" id="managed-products-vip"></div></div>
-    <div class="store-category hidden" data-store-panel="packs"><div class="category-title"><span>▱</span><h2>PACKS</h2></div><div class="product-grid">
-      <article class="product-card"><h3>CHARCOAL PACK</h3><p>• One-time purchase</p><button class="contents-button">◉ &nbsp; View Contents</button><div class="price-label">PRICE</div><strong class="price">£2.99</strong><button class="btn product-add" data-product="Charcoal Pack">ADD TO CART</button></article>
-      <article class="product-card"><h3>BACKPACK PACK</h3><p>• One-time purchase</p><button class="contents-button">◉ &nbsp; View Contents</button><div class="price-label">PRICE</div><strong class="price">£2.99</strong><button class="btn product-add" data-product="Backpack Pack">ADD TO CART</button></article>
-      <article class="product-card"><h3>TURRET PACK</h3><p>• One-time purchase</p><button class="contents-button">◉ &nbsp; View Contents</button><div class="price-label">PRICE</div><strong class="price">£4.99</strong><button class="btn product-add" data-product="Turret Pack">ADD TO CART</button></article>
-    </div><div class="product-grid managed-products hidden" id="managed-products-packs"></div></div>
-    <div class="store-category hidden" data-store-panel="kits"><div class="category-title"><span>⚒</span><h2>KITS</h2></div><div class="empty-state compact" id="kits-empty"><div class="empty-icon">▱</div><h3>No kits added yet</h3><p>You can add your products and kits later through your admin panel.</p></div><div class="product-grid managed-products hidden" id="managed-products-kits"></div></div>
+    <div id="store-categories"><div class="empty-state compact"><h3>Loading store products…</h3></div></div>
     <div class="store-category hidden" data-store-panel="cart"><div class="category-title"><span>🛒</span><h2>CART</h2></div><div class="cart-items empty-state compact"><div class="empty-icon">🛒</div><h3>Your cart is empty</h3><p>Products you add will appear here.</p></div></div>
-
     <section class="supporters-section">
       <div class="category-title"><span>🏆</span><h2>TOP SUPPORTERS</h2></div>
       <div class="supporters-panel"><div class="period-tabs"><button class="period-tab active">DAILY</button><button class="period-tab">WEEKLY</button><button class="period-tab">MONTHLY</button><button class="period-tab">ALL TIME</button></div>

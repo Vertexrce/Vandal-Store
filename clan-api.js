@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { rceRequest } = require('./rce-client');
 
 function createClanApi(app, options) {
-  const { DATA_DIR, GUILD_ID, requireLogin, requireAdmin, readAccounts, readProducts } = options;
+  const { DATA_DIR, GUILD_ID, requireLogin, requireAdmin, readAccounts, writeAccounts, readProducts } = options;
   const imageDir = path.join(DATA_DIR, 'clan-images');
   const wrap = handler => async (req, res) => {
     try {
@@ -140,6 +140,13 @@ function createClanApi(app, options) {
     res.status(201).json(result);
   }));
 
+  app.get('/api/inventory', requireLogin, wrap(async (req, res) => {
+    const accounts = await readAccounts();
+    const account = accounts[req.session.user.id] || {};
+    res.set('Cache-Control', 'no-store');
+    res.json({ purchasedKits: Array.isArray(account.purchasedKits) ? account.purchasedKits : [] });
+  }));
+
   app.get('/api/admin/linked-users', requireAdmin, wrap(async (_req, res) => {
     const accounts = await readAccounts();
     const linked = Object.entries(accounts)
@@ -164,7 +171,8 @@ function createClanApi(app, options) {
         name: product.name,
         gameKit: product.gameKit || '',
         price: product.price,
-        description: product.description || ''
+        description: product.description || '',
+        requiredRoleId: product.requiredRoleId || ''
       })),
       servers
     });
@@ -176,9 +184,16 @@ function createClanApi(app, options) {
     const gamertag = String(req.body?.gamertag || '').trim();
     const product = (await readProducts()).find(item => item.id === productId && String(item.category).toLowerCase() === 'kits');
     if (!product) return res.status(404).json({ error: 'That kit is not configured in the Store. Add it under Store → Kits first.' });
-    if (!product.gameKit) return res.status(400).json({ error: 'This store kit has no RCE kit name. Recreate/configure it with its in-game kit name in the Store tab.' });
+    if (!product.gameKit) return res.status(400).json({ error: 'This store kit has no RCE kit name. Configure its in-game kit name in the Store tab.' });
     if (!serverId || serverId.length > 100) return res.status(400).json({ error: 'Choose a game server.' });
     if (!/^[A-Za-z0-9 _.-]{2,32}$/.test(gamertag)) return res.status(400).json({ error: 'Enter an in-game username using letters, numbers, spaces, dots, underscores, or hyphens.' });
+
+    // Require a linked website account so the grant can be attached to the correct inventory.
+    const accounts = await readAccounts();
+    const normalizedGamertag = gamertag.toLowerCase();
+    const owner = Object.entries(accounts).find(([, account]) => String(account?.gamertag || '').trim().toLowerCase() === normalizedGamertag);
+    if (!owner) return res.status(409).json({ error: 'No linked website account matches that gamertag. Ask the player to sign in and link the same in-game name, then try again.' });
+
     const result = await rceRequest('/v1/kits/give', {
       method: 'POST',
       body: {
@@ -189,7 +204,22 @@ function createClanApi(app, options) {
         actorId: req.session.user.id
       }
     });
-    res.json(result);
+
+    const [discordId, account] = owner;
+    const purchasedKits = Array.isArray(account.purchasedKits) ? account.purchasedKits : [];
+    purchasedKits.push({
+      id: crypto.randomUUID(),
+      productId: product.id,
+      name: product.name,
+      gameKit: product.gameKit,
+      serverId,
+      gamertag,
+      grantedAt: new Date().toISOString(),
+      grantedBy: req.session.user.id
+    });
+    accounts[discordId] = { ...account, purchasedKits };
+    await writeAccounts(accounts);
+    res.json({ ...result, inventoryUpdated: true, message: `Gave ${product.name} to ${gamertag} and added it to their Purchased Kits inventory.` });
   }));
 }
 
