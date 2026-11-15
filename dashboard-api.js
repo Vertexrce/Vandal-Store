@@ -3,6 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const dns = require('dns').promises;
 const net = require('net');
+const WebSocket = require('ws');
 
 const SERVER_FILE = 'servers.json';
 const SETTINGS_FILE = 'dashboard-settings.json';
@@ -105,7 +106,7 @@ function openRconSocket(url, command, identifier, timeoutMs, responseTimeoutMs) 
     };
     const openTimer = setTimeout(() => finish(new Error('Connection timed out.')), timeoutMs);
 
-    socket.addEventListener('open', () => {
+    socket.once('open', () => {
       opened = true;
       try {
         socket.send(JSON.stringify({ Identifier: identifier, Message: command, Name: 'VandalWebAdmin' }));
@@ -114,10 +115,10 @@ function openRconSocket(url, command, identifier, timeoutMs, responseTimeoutMs) 
         return;
       }
       responseTimer = setTimeout(() => finish(null, { connected: true, response: '' }), responseTimeoutMs);
-    }, { once: true });
+    });
 
-    socket.addEventListener('message', event => {
-      const raw = typeof event.data === 'string' ? event.data : String(event.data);
+    socket.on('message', data => {
+      const raw = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
       let message = raw;
       try {
         const parsed = JSON.parse(raw);
@@ -130,16 +131,16 @@ function openRconSocket(url, command, identifier, timeoutMs, responseTimeoutMs) 
       finish(null, { connected: true, response: message });
     });
 
-    socket.addEventListener('error', () => {
+    socket.once('error', () => {
       if (opened) finish(null, { connected: true, response: '' });
       else finish(new Error('Could not reach the RCON endpoint.'));
-    }, { once: true });
+    });
 
-    socket.addEventListener('close', () => {
+    socket.once('close', () => {
       if (settled) return;
       if (opened) finish(null, { connected: true, response: '' });
       else finish(new Error('RCON connection was refused.'));
-    }, { once: true });
+    });
   });
 }
 
