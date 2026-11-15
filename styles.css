@@ -185,3 +185,6 @@
 }
 
 .inventory-kit-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.inventory-kit-card{padding:18px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:12px;background:rgba(255,255,255,.035)}.inventory-kit-card h3{margin:0 0 8px}.inventory-kit-card p{margin:0 0 8px}.inventory-kit-card small{opacity:.7}
+.inventory-claim{width:100%;margin-top:14px;min-height:42px}.inventory-claim:disabled{opacity:.48;cursor:not-allowed;filter:grayscale(1);transform:none;box-shadow:none}
+
+.purchase-switch button.chosen{background:#d5aa42;color:#080808}.purchase-switch button:hover{background:#b98e2f;color:#080808}.contents-modal{max-height:80vh;overflow:auto}.contents-body{color:#c4c7cf;line-height:1.7;white-space:pre-wrap;text-align:left}.contents-body .btn{margin-top:14px}

@@ -517,12 +517,6 @@ function createDashboardApi(app, options) {
     try { res.json(await getGuildChannels(req.query.refresh === '1')); }
     catch (error) { res.status(error.status || 502).json({ error: error.message }); }
   });
-  app.get('/api/admin/discord/roles', requireAdmin, async (_req, res) => {
-    try {
-      const roles = await discordRequest(`/guilds/${GUILD_ID}/roles`);
-      res.json((Array.isArray(roles) ? roles : []).filter(role => !role.managed && role.name !== '@everyone').map(role => ({ id: role.id, name: role.name })).sort((a, b) => a.name.localeCompare(b.name)));
-    } catch (error) { res.status(error.status || 502).json({ error: error.message }); }
-  });
 
   app.get('/api/admin/discord/messages', requireAdmin, async (req, res) => {
     const channelId = String(req.query.channelId || '');
@@ -537,18 +531,17 @@ function createDashboardApi(app, options) {
   });
 
   app.get('/api/admin/settings', requireAdmin, async (req, res) => {
-    try { res.json(await readJson(SETTINGS_FILE, { activeClansChannelId: '', inviteChannelId: '', logsChannelId: '', boosterRoleId: '' })); }
+    try { res.json(await readJson(SETTINGS_FILE, { activeClansChannelId: '', inviteChannelId: '', logsChannelId: '' })); }
     catch (error) { console.error('Could not read dashboard settings:', error.message); res.status(500).json({ error: 'Could not load channel settings.' }); }
   });
 
   app.put('/api/admin/settings', requireAdmin, async (req, res) => {
-    const keys = ['activeClansChannelId', 'inviteChannelId', 'logsChannelId', 'boosterRoleId'];
+    const keys = ['activeClansChannelId', 'inviteChannelId', 'logsChannelId'];
     const settings = Object.fromEntries(keys.map(key => [key, String(req.body?.[key] || '')]));
     try {
       const channels = await getGuildChannels();
       const validIds = new Set(channels.map(channel => channel.id));
-      if (keys.slice(0, 3).some(key => settings[key] && !validIds.has(settings[key]))) return res.status(400).json({ error: 'Choose channels from the configured VANDAL Discord server.' });
-      if (settings.boosterRoleId) { const roles = await discordRequest(`/guilds/${GUILD_ID}/roles`); if (!roles.some(role => role.id === settings.boosterRoleId)) return res.status(400).json({ error: 'Choose a valid Discord role.' }); }
+      if (keys.some(key => settings[key] && !validIds.has(settings[key]))) return res.status(400).json({ error: 'Choose channels from the configured VANDAL Discord server.' });
       await writeJson(SETTINGS_FILE, settings);
       res.json(settings);
     } catch (error) {

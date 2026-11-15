@@ -35,7 +35,7 @@ Do not commit the bot token, client secret, or session secret to GitHub. The Dis
 
 After signing in, a user with role `1569519586166972497` in guild `1565095830560575508` gets an **ADMIN** link and can open `/admin`. All admin API routes re-check the role with Discord, so hiding the link is not the security boundary. Other signed-in users cannot use the dashboard APIs.
 
-The dashboard supports editable store products with custom categories, subscription and lifetime pricing, optional Discord-role requirements, and per-product contents-file uploads. The old hard-coded Packs cards have been removed; products and categories are generated from the admin catalogue. Product records (`products.json`), Discord-to-gamertag links (`accounts.json`), and login sessions (`sessions/`) are stored in `DATA_DIR` (`/data` in this setup). In Railway, attach a Volume to this service and mount it at `/data`, and set `DATA_DIR=/data`, so logins survive restarts and redeploys. Keep the same `SESSION_SECRET` in Railway Variables across deploys; changing it invalidates existing login cookies.
+The dashboard includes product creation and deletion for VIP, Packs, and Kits. Product records (`products.json`), Discord-to-gamertag links (`accounts.json`), and login sessions (`sessions/`) are stored in `DATA_DIR` (`/data` in this setup). In Railway, attach a Volume to this service and mount it at `/data`, and set `DATA_DIR=/data`, so logins survive restarts and redeploys. Keep the same `SESSION_SECRET` in Railway Variables across deploys; changing it invalidates existing login cookies.
 
 ## Local run
 
@@ -47,7 +47,7 @@ Requires Node.js 20+. Run `npm install` then set the environment variables and r
 - The public server cards are generated from servers configured in the admin dashboard and show live player count, capacity, and queue when the configured WebRCON server reports those fields.
 - The leaderboard is a visual placeholder and does not pull Saturn player statistics.
 - Discord OAuth login sends every account back to the public homepage. Users with the configured admin role can open the role-gated dashboard from the account menu.
-- Admin-created products are served to the public Store page and can be added to its cart. Payment checkout and purchase records are not connected yet. Role requirements currently gate product access in the website UI; validate the selected Discord role again in any future checkout/payment endpoint before granting a purchase. Store Kits can be manually issued by an admin through the RCE bot.
+- Admin-created products are served to the public Store page and can be added to its cart. Payment checkout and purchase records are not connected yet. Store Kits can be manually issued by an admin through the RCE bot.
 - The gamertag flow stores the name supplied by the signed-in user; it does not prove ownership of that console account.
 - The website keeps its own server configuration in `DATA_DIR/servers.json`; it does not automatically import the Python bot's SQLite `game_servers` table. Add the same server through the dashboard if both services need it.
 - Clan server tabs, clan records, members, and invite codes are read from the Python RCE bot over its authenticated HTTP bridge. The website does not make a second clan database.
@@ -65,15 +65,6 @@ Set `RCE_WEB_API_SECRET` to the same private random value on both services (32+ 
 If both services use the same Discord bot token, set `DISCORD_BOT_ENABLED=false` on the website service so only the Python bot owns the Discord gateway connection; the website can still use its server-side token for Discord REST lookups. If the website has a separate bot application, the gateway client can stay enabled.
 
 Register each game server with the Python bot (`/game-server add`), then run `/clan setup` in Discord for that server and choose its application, invite, and active-clans channels. The website clan page will show those registered servers; creation stays unavailable until setup is complete. Website clan creation uses the bot to create the clan role/channel and refresh the active panel. Clan invite codes generated on either surface use the same database; players can use the website **Join Clan** button or Discord `/clan join <server> <code>`.
-
-
-### Store product configuration (updated)
-
-Use Admin → Store to create or edit any product. Categories are free text, so you can create your own categories instead of using the old built-in Packs section. Each product can store a subscription price and a lifetime price, with one selected as its default billing type. You can select a Discord role that is required for the product; the product remains visible in the public catalogue, while users without that role cannot add it to their cart.
-
-Upload an optional contents file (up to 5 MB) while creating or editing a product. The public store displays **View Contents** only when a file exists for that product. Contents files are stored in the private `DATA_DIR/product-contents` folder and are served through the product-content endpoint.
-
-The Booster inventory tab can be restricted to a selected Discord role in Admin → Kits & Linked Users. Kit products in the admin kit list are the Store products configured under the `Kits` category, including their required-role settings. Automatic discovery of every kit definition directly from the game server is not part of the website bridge currently included here; the separate RCE bot service would need to expose a list-kits API for that.
 
 ### Store Kits and linked accounts
 

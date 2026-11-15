@@ -158,21 +158,16 @@
           <div class="eyebrow">CATALOGUE</div>
           <div class="heading-row"><div><h1>Store</h1><p class="lead">Products added here are also returned by the public website store API.</p></div></div>
           <section class="panel">
-            <h2 id="product-form-heading">ADD / EDIT STORE PRODUCT</h2>
+            <h2>ADD A STORE PRODUCT</h2>
             <form id="product-form">
-              <input type="hidden" name="id" id="product-id">
               <div class="form-grid three">
                 <div class="field-wrap"><label for="product-name">Product name</label><input class="field" id="product-name" name="name" maxlength="80" required></div>
-                <div class="field-wrap"><label for="product-category">Your category</label><input class="field" id="product-category" name="category" maxlength="40" placeholder="e.g. VIP, Kits, Custom" required></div>
-                <div class="field-wrap"><label for="product-billing">Purchase type</label><select class="field" id="product-billing" name="billingType"><option value="lifetime">Lifetime / one-time</option><option value="subscription">Subscription</option></select></div>
-                <div class="field-wrap" id="lifetime-price-wrap"><label for="product-price">Lifetime price</label><input class="field" id="product-price" name="lifetimePrice" placeholder="e.g. £14.99" maxlength="40"></div>
-                <div class="field-wrap" id="monthly-price-wrap"><label for="product-monthly-price">Subscription price</label><input class="field" id="product-monthly-price" name="monthlyPrice" placeholder="e.g. £4.99 / month" maxlength="40"></div>
-                <div class="field-wrap"><label for="product-role">Required Discord role (optional)</label><select class="field" id="product-role" name="requiredRoleId"><option value="">No role required — everyone</option></select></div>
-                <div class="field-wrap" style="grid-column:1/-1"><label for="product-description">Description</label><input class="field" id="product-description" name="description" maxlength="500" placeholder="Optional short description"></div>
-                <div class="field-wrap hidden" id="game-kit-wrap"><label for="game-kit-name">Exact in-game RCE kit name</label><input class="field" id="game-kit-name" name="gameKit" maxlength="64" placeholder="Exact configured game kit name"><small class="hint">The bot uses this exact name when granting the kit.</small></div>
-                <div class="field-wrap" style="grid-column:1/-1"><label for="product-content-file">Contents file (optional, max 5 MB)</label><input class="field" id="product-content-file" type="file" accept=".pdf,.txt,.png,.jpg,.jpeg,.webp,.csv,.doc,.docx,.xls,.xlsx"><small class="hint">If uploaded, customers see a View Contents button on this product. Leave blank to keep its existing file.</small></div>
+                <div class="field-wrap"><label for="product-category">Category</label><select class="field" id="product-category" name="category"><option>VIP</option><option>Packs</option><option>Kits</option></select></div>
+                <div class="field-wrap"><label for="product-price">One-time / lifetime price</label><input class="field" id="product-price" name="price" placeholder="e.g. £14.99" maxlength="40"></div><div class="field-wrap"><label for="product-monthly-price">Monthly subscription price (optional)</label><input class="field" id="product-monthly-price" name="monthlyPrice" placeholder="e.g. £4.99/mo" maxlength="40"></div>
+                <div class="field-wrap" style="grid-column:1/-1"><label for="product-description">Short description</label><input class="field" id="product-description" name="description" maxlength="500" placeholder="Optional short description"></div><div class="field-wrap" style="grid-column:1/-1"><label for="product-contents">View Contents text</label><textarea class="field" id="product-contents" name="contents" maxlength="5000" rows="4" placeholder="List what is included in this product"></textarea></div><div class="field-wrap" style="grid-column:1/-1"><label for="product-contents-file">Contents file (optional)</label><input class="field" id="product-contents-file" type="file" accept=".txt,.pdf,.png,.jpg,.jpeg,.webp"><small class="hint">Shown inside the View Contents panel. Maximum 2 MB.</small></div>
+                <div class="field-wrap hidden" id="game-kit-wrap"><label for="game-kit-name">Exact in-game RCE kit name</label><input class="field" id="game-kit-name" name="gameKit" maxlength="64" placeholder="Must match the kit name configured on Rust"><small class="hint">Required for Kits. This is the kit name the bot sends to the selected game server.</small></div>
               </div>
-              <div class="button-row"><button class="btn" type="submit" id="product-submit">SAVE PRODUCT</button><button class="btn secondary" type="button" id="product-cancel-edit">CLEAR</button></div>
+              <div class="button-row"><button class="btn" type="submit">ADD PRODUCT</button></div>
             </form>
             <div class="notice" id="store-notice" role="status"></div>
             <div class="list" id="product-list"><div class="empty">Loading products…</div></div>
@@ -182,7 +177,6 @@
         <section class="view" data-view="kits">
           <div class="eyebrow">PLAYER REWARDS</div>
           <div class="heading-row"><div><h1>Kits &amp; Linked Users</h1><p class="lead">Only kits configured in Store → Kits can be sent. The RCE bot delivers them to a player's in-game inventory.</p></div><button class="btn secondary" id="refresh-kits-users" type="button">REFRESH</button></div>
-          <section class="panel"><h2>BOOSTER TAB ACCESS</h2><div class="form-grid"><div class="field-wrap"><label for="booster-role">Role required to view Booster tab</label><select class="field" id="booster-role"><option value="">No role restriction</option></select></div><div class="button-row"><button class="btn" type="button" id="save-booster-role">SAVE BOOSTER ACCESS</button></div></div><div class="notice" id="booster-role-notice" role="status"></div></section>
           <section class="panel">
             <div class="panel-head"><h2>STORE KITS</h2><button class="btn secondary" data-open-tab="store" type="button">Configure in Store</button></div>
             <div class="list" id="admin-kits-list"><div class="empty">Loading store kits…</div></div>

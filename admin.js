@@ -1,5 +1,5 @@
 const $ = selector => document.querySelector(selector);
-const state = { me: null, servers: [], channels: [], settings: {}, kits: [], kitServers: [], roles: [] };
+const state = { me: null, servers: [], channels: [], settings: {}, kits: [], kitServers: [] };
 
 async function api(url, options = {}) {
   const response = await fetch(url, {
@@ -54,32 +54,16 @@ function renderProducts(products) {
   $('#product-count').textContent = products.length.toLocaleString();
   $('#product-list').innerHTML = products.length ? products.map(product => `
     <div class="list-item">
-      <div><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category)} · ${escapeHtml(product.billingType === 'subscription' ? (product.monthlyPrice || product.price) + ' subscription' : (product.lifetimePrice || product.price) + ' lifetime')}${product.gameKit ? ` · RCE kit: ${escapeHtml(product.gameKit)}` : ''}${product.requiredRoleId ? ` · Role: ${escapeHtml(state.roles.find(role => role.id === product.requiredRoleId)?.name || product.requiredRoleId)}` : ''}${product.contentFile ? ` · Contents: ${escapeHtml(product.contentName || 'uploaded')}` : ''}${product.description ? ` · ${escapeHtml(product.description)}` : ''}</small></div>
-      <div class="button-row"><button class="btn secondary" type="button" data-edit-product="${escapeHtml(product.id)}">EDIT</button><button class="btn danger" type="button" data-delete-product="${escapeHtml(product.id)}">DELETE</button></div>
-    </div>`).join('') : '<div class="empty">No products yet. Add your first product above.</div>';
-  $('#product-list').querySelectorAll('[data-edit-product]').forEach(button => button.addEventListener('click', () => {
-    const product = products.find(item => item.id === button.dataset.editProduct);
-    if (!product) return;
-    $('#product-id').value = product.id;
-    $('#product-name').value = product.name || '';
-    $('#product-category').value = product.category || '';
-    $('#product-billing').value = product.billingType || 'lifetime';
-    $('#product-price').value = product.lifetimePrice || (product.billingType !== 'subscription' ? product.price : '') || '';
-    $('#product-monthly-price').value = product.monthlyPrice || (product.billingType === 'subscription' ? product.price : '') || '';
-    $('#product-description').value = product.description || '';
-    $('#game-kit-name').value = product.gameKit || '';
-    $('#product-role').value = product.requiredRoleId || '';
-    updateStoreKitField(); updateBillingFields();
-    $('#product-form-heading').textContent = `EDIT PRODUCT: ${product.name}`;
-    $('#product-submit').textContent = 'SAVE CHANGES';
-    $('#product-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }));
+      <div><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category)} · ${escapeHtml(product.monthlyPrice || '')}${product.monthlyPrice && (product.lifetimePrice || product.price) ? ' monthly · ' : ''}${escapeHtml(product.lifetimePrice || product.price || '')}${product.gameKit ? ` · RCE kit: ${escapeHtml(product.gameKit)}` : ''}${product.description ? ` · ${escapeHtml(product.description)}` : ''}</small></div>
+      <button class="btn danger" type="button" data-delete-product="${escapeHtml(product.id)}">DELETE</button>
+    </div>`).join('') : '<div class="empty">No products yet. Add a product above.</div>';
   $('#product-list').querySelectorAll('[data-delete-product]').forEach(button => button.addEventListener('click', async () => {
     if (!confirm('Delete this store product?')) return;
     try {
       await api(`/api/admin/products/${encodeURIComponent(button.dataset.deleteProduct)}`, { method: 'DELETE' });
       setNotice('#store-notice', 'Product deleted.', 'success');
-      await loadProducts(); await loadOverview(true);
+      await loadProducts();
+      await loadOverview(true);
     } catch (error) { setNotice('#store-notice', error.message, 'error'); }
   }));
 }
@@ -90,65 +74,33 @@ async function loadProducts() {
 }
 
 function updateStoreKitField() {
-  const isKit = $('#product-category').value.trim().toLowerCase() === 'kits';
+  const isKit = $('#product-category').value === 'Kits';
   $('#game-kit-wrap').classList.toggle('hidden', !isKit);
   $('#game-kit-name').required = isKit;
 }
-function updateBillingFields() {
-  const subscription = $('#product-billing').value === 'subscription';
-  $('#product-monthly-price').required = subscription;
-  $('#product-price').required = !subscription;
-}
-$('#product-category').addEventListener('input', updateStoreKitField);
-$('#product-billing').addEventListener('change', updateBillingFields);
-updateStoreKitField(); updateBillingFields();
-
-$('#product-cancel-edit').addEventListener('click', () => {
-  $('#product-form').reset(); $('#product-id').value = '';
-  $('#product-form-heading').textContent = 'ADD / EDIT STORE PRODUCT'; $('#product-submit').textContent = 'SAVE PRODUCT';
-  updateStoreKitField(); updateBillingFields();
-});
+$('#product-category').addEventListener('change', updateStoreKitField);
+updateStoreKitField();
 
 $('#product-form').addEventListener('submit', async event => {
   event.preventDefault();
   const form = event.currentTarget;
   const data = Object.fromEntries(new FormData(form));
-  const id = data.id; delete data.id;
-  data.price = data.billingType === 'subscription' ? data.monthlyPrice : data.lifetimePrice;
+  const file = $('#product-contents-file').files[0];
+  if (file) {
+    if (file.size > 2 * 1024 * 1024) return setNotice('#store-notice', 'Contents file must be 2 MB or smaller.', 'error');
+    try { data.contentFile = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve({ name: file.name, data: reader.result }); reader.onerror = reject; reader.readAsDataURL(file); }); }
+    catch { return setNotice('#store-notice', 'Could not read the contents file.', 'error'); }
+  }
   setNotice('#store-notice', 'Saving product…');
   try {
-    const product = await api(id ? `/api/admin/products/${encodeURIComponent(id)}` : '/api/admin/products', { method: id ? 'PUT' : 'POST', body: JSON.stringify(data) });
-    const file = $('#product-content-file').files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) throw new Error('Choose a file smaller than 5 MB.');
-      const base64 = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1] || ''); reader.onerror = () => reject(new Error('Could not read that file.')); reader.readAsDataURL(file); });
-      await api(`/api/admin/products/${encodeURIComponent(product.id)}/content`, { method: 'POST', body: JSON.stringify({ fileName: file.name, mimeType: file.type || 'application/octet-stream', data: base64 }) });
-    }
-    form.reset(); $('#product-id').value = ''; $('#product-form-heading').textContent = 'ADD / EDIT STORE PRODUCT'; $('#product-submit').textContent = 'SAVE PRODUCT';
-    updateStoreKitField(); updateBillingFields();
-    setNotice('#store-notice', id ? 'Product updated.' : 'Product added.', 'success');
-    await loadProducts(); await loadOverview(true);
+    await api('/api/admin/products', { method: 'POST', body: JSON.stringify(data) });
+    form.reset();
+    updateStoreKitField();
+    setNotice('#store-notice', 'Product added.', 'success');
+    await loadProducts();
+    await loadOverview(true);
   } catch (error) { setNotice('#store-notice', error.message, 'error'); }
 });
-
-async function loadDiscordRoles() {
-  try {
-    state.roles = await api('/api/admin/discord/roles');
-    const options = '<option value="">No role required — everyone</option>' + state.roles.map(role => `<option value="${escapeHtml(role.id)}">${escapeHtml(role.name)}</option>`).join('');
-    $('#product-role').innerHTML = options;
-    $('#booster-role').innerHTML = options;
-    const settings = await api('/api/admin/settings');
-    state.settings = settings; $('#booster-role').value = settings.boosterRoleId || '';
-  } catch (error) { setNotice('#booster-role-notice', `Could not load Discord roles: ${error.message}`, 'error'); }
-}
-$('#save-booster-role').addEventListener('click', async () => {
-  try {
-    const settings = { ...state.settings, boosterRoleId: $('#booster-role').value };
-    await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify(settings) });
-    state.settings = settings; setNotice('#booster-role-notice', 'Booster tab access saved.', 'success');
-  } catch (error) { setNotice('#booster-role-notice', error.message, 'error'); }
-});
-loadDiscordRoles();
 
 function renderAdminKits(data) {
   state.kits = data.kits || [];
@@ -156,7 +108,7 @@ function renderAdminKits(data) {
   const list = $('#admin-kits-list');
   list.innerHTML = state.kits.length ? state.kits.map(kit => `
     <div class="list-item">
-      <div class="kit-product-info"><strong>${escapeHtml(kit.name)}</strong><small>${escapeHtml(kit.price)} · ${kit.gameKit ? `RCE kit: ${escapeHtml(kit.gameKit)}` : 'Missing exact RCE kit name'}${kit.requiredRoleId ? ` · Required role: ${escapeHtml(state.roles.find(role => role.id === kit.requiredRoleId)?.name || kit.requiredRoleId)}` : ' · Available to everyone'}</small></div>
+      <div class="kit-product-info"><strong>${escapeHtml(kit.name)}</strong><small>${escapeHtml(kit.price)} · ${kit.gameKit ? `RCE kit: ${escapeHtml(kit.gameKit)}` : 'Missing exact RCE kit name'}</small></div>
       ${kit.gameKit
         ? '<span class="tag online">READY</span>'
         : `<div class="kit-map-controls"><input class="field" data-kit-mapping="${escapeHtml(kit.id)}" maxlength="64" placeholder="Exact in-game kit name"><button class="btn secondary" type="button" data-save-kit-mapping="${escapeHtml(kit.id)}">SAVE</button></div>`}
@@ -372,7 +324,6 @@ async function loadChannelsAndSettings() {
     $('#active-clans-channel').innerHTML = channelOptions(channels, settings.activeClansChannelId, 'Choose active-clans channel');
     $('#invite-channel').innerHTML = channelOptions(channels, settings.inviteChannelId, 'Choose invite channel');
     $('#clan-logs-channel').innerHTML = channelOptions(channels, settings.logsChannelId, 'Choose clan logs channel');
-    if ($('#booster-role')) $('#booster-role').value = settings.boosterRoleId || '';
   } catch (error) {
     setNotice('#discord-notice', `${error.message} Check that the bot is in the server and can view its channels.`, 'error');
     setNotice('#clan-notice', error.message, 'error');
@@ -444,8 +395,7 @@ $('#save-clan-channels').addEventListener('click', async () => {
   const settings = {
     activeClansChannelId: $('#active-clans-channel').value,
     inviteChannelId: $('#invite-channel').value,
-    logsChannelId: $('#clan-logs-channel').value,
-    boosterRoleId: state.settings.boosterRoleId || ''
+    logsChannelId: $('#clan-logs-channel').value
   };
   setNotice('#clan-notice', 'Saving clan channel settings…');
   try {

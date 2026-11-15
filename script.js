@@ -99,49 +99,62 @@ async function loadPublicServers(){
 loadPublicServers();
 setInterval(loadPublicServers,15000);
 
-document.addEventListener('click',event=>{
-  const tab=event.target.closest('[data-store]');
-  if(!tab)return;
-  document.querySelectorAll('[data-store]').forEach(t=>t.classList.toggle('selected',t===tab));
-  document.querySelectorAll('[data-store-panel]').forEach(panel=>panel.classList.toggle('hidden',panel.dataset.storePanel!==tab.dataset.store));
-});
+const storeTabs=document.querySelectorAll('[data-store]');
+storeTabs.forEach(tab=>tab.addEventListener('click',()=>{
+  storeTabs.forEach(t=>t.classList.toggle('selected',t===tab));
+  document.querySelectorAll('[data-store-panel]').forEach(p=>p.classList.toggle('hidden',p.dataset.storePanel!==tab.dataset.store));
+}));
 document.querySelectorAll('.period-tab').forEach(tab=>tab.addEventListener('click',()=>{
   document.querySelectorAll('.period-tab').forEach(t=>t.classList.toggle('active',t===tab));
 }));
 const inventoryNames={free:'FREE KITS',booster:'BOOSTER KITS',purchased:'PURCHASED KITS'};
-async function loadPurchasedKits(){
+let purchasedKitCache=[];
+function formatKitCooldown(until){
+  const remaining=new Date(until).getTime()-Date.now();
+  if(!Number.isFinite(remaining)||remaining<=0)return '';
+  const total=Math.ceil(remaining/1000),hours=Math.floor(total/3600),minutes=Math.floor((total%3600)/60),seconds=total%60;
+  return `Available in ${hours}h ${minutes}m ${seconds}s`;
+}
+function renderPurchasedKits(){
   const target=document.querySelector('#inventory-items');
   if(!target)return;
-  target.className='empty-state compact';
-  target.innerHTML='<p>Loading your purchased kits…</p>';
+  if(!purchasedKitCache.length){target.className='empty-state compact';target.innerHTML='<div class="empty-icon">▱</div><h3>No purchased kits yet</h3><p>Kits granted to your linked account by an admin will appear here.</p>';return;}
+  target.className='inventory-kit-list';target.replaceChildren();
+  purchasedKitCache.slice().reverse().forEach(kit=>{
+    const card=document.createElement('article');card.className='inventory-kit-card';
+    const title=document.createElement('h3');title.textContent=kit.name||kit.gameKit||'Store Kit';
+    const button=document.createElement('button');button.type='button';button.className='btn btn-red inventory-claim';
+    const cooldown=formatKitCooldown(kit.cooldownUntil);
+    button.disabled=Boolean(cooldown);button.textContent=cooldown||'CLAIM';
+    button.addEventListener('click',async()=>{
+      button.disabled=true;button.textContent='CLAIMING…';
+      try{
+        const response=await fetch(`/api/inventory/${encodeURIComponent(kit.id)}/claim`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'});
+        const body=await response.json();
+        if(!response.ok)throw new Error(body.error||'Could not claim this kit.');
+        kit.cooldownUntil=body.cooldownUntil;button.textContent=formatKitCooldown(kit.cooldownUntil)||'CLAIM';
+      }catch(error){button.disabled=false;button.textContent='CLAIM';alert(error.message);}
+    });
+    card.append(title,button);target.append(card);
+  });
+}
+async function loadPurchasedKits(){
+  const target=document.querySelector('#inventory-items');if(!target)return;
+  target.className='empty-state compact';target.innerHTML='<p>Loading your purchased kits…</p>';
   try{
     const response=await fetch('/api/inventory',{credentials:'same-origin',cache:'no-store'});
     if(response.status===401)throw new Error('Sign in with Discord to view your purchased kits.');
-    const body=await response.json();
-    if(!response.ok)throw new Error(body.error||'Could not load your inventory.');
-    const kits=Array.isArray(body.purchasedKits)?body.purchasedKits:[];
-    if(!kits.length){target.innerHTML='<div class="empty-icon">▱</div><h3>No purchased kits yet</h3><p>Kits granted to your linked account by an admin will appear here.</p>';return;}
-    target.className='inventory-kit-list';
-    target.replaceChildren();
-    kits.slice().reverse().forEach(kit=>{
-      const card=document.createElement('article');card.className='inventory-kit-card';
-      const title=document.createElement('h3');title.textContent=kit.name||'Store Kit';
-      const details=document.createElement('p');details.textContent=`In-game kit: ${kit.gameKit||'—'} · Server: ${kit.serverId||'—'}`;
-      const date=document.createElement('small');
-      const parsed=kit.grantedAt?new Date(kit.grantedAt):null;
-      date.textContent=parsed&&Number.isFinite(parsed.getTime())?`Granted ${parsed.toLocaleString()}`:'Grant date unavailable';
-      card.append(title,details,date);target.append(card);
-    });
+    const body=await response.json();if(!response.ok)throw new Error(body.error||'Could not load your inventory.');
+    purchasedKitCache=Array.isArray(body.purchasedKits)?body.purchasedKits:[];renderPurchasedKits();
   }catch(error){target.innerHTML='';const message=document.createElement('p');message.textContent=error.message;target.append(message);}
 }
+setInterval(()=>{
+  if(document.querySelector('[data-inventory="purchased"].active'))renderPurchasedKits();
+},1000);
 document.querySelectorAll('[data-inventory]').forEach(tab=>tab.addEventListener('click',()=>{
   document.querySelectorAll('[data-inventory]').forEach(t=>t.classList.toggle('active',t===tab));
   document.querySelector('#inventory-title').textContent=inventoryNames[tab.dataset.inventory];
   if(tab.dataset.inventory==='purchased')loadPurchasedKits();
-  else if(tab.dataset.inventory==='booster'){
-    const target=document.querySelector('#inventory-items');
-    if(target){target.className='empty-state compact';target.innerHTML='<div class="empty-icon">🚀</div><h3>Booster inventory</h3><p>Your Discord role gives you access to this tab. Booster kit claiming is not connected to the website yet.</p>';}
-  }
 }));
 document.querySelectorAll('.purchase-switch').forEach(group=>group.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
   group.querySelectorAll('button').forEach(x=>x.classList.toggle('chosen',x===b));
@@ -169,59 +182,65 @@ function renderCart(){
   const note=document.createElement('p');note.className='cart-note';note.textContent='Checkout will be enabled when payments are connected.';
   box.append(list,note);
 }
-function addToCart(name){
-  cart.push(name);renderCart();document.querySelector('[data-store="cart"]').click();
+function addToCart(name, price){
+  cart.push(price ? `${name} — ${price}` : name);renderCart();document.querySelector('[data-store="cart"]').click();
 }
 document.addEventListener('click',event=>{
+  const contents=event.target.closest('.contents-button');
+  if(contents){
+    const dialog=document.querySelector('#contents-dialog');
+    const title=document.querySelector('#contents-title');
+    const body=document.querySelector('#contents-body');
+    title.textContent=contents.dataset.title||'Product contents';
+    body.replaceChildren();
+    if(contents.dataset.contents){const copy=document.createElement('p');copy.textContent=contents.dataset.contents;body.append(copy);}
+    if(contents.dataset.file){const link=document.createElement('a');link.className='btn btn-red';link.href=contents.dataset.file;link.download=contents.dataset.filename||'contents';link.textContent='OPEN / DOWNLOAD CONTENTS FILE';body.append(link);}
+    if(!body.childNodes.length){const empty=document.createElement('p');empty.textContent='No contents have been added for this product yet.';body.append(empty);}
+    dialog?.showModal();return;
+  }
+  const mode=event.target.closest('[data-price-mode]');
+  if(mode){const card=mode.closest('.product-card');card.querySelectorAll('[data-price-mode]').forEach(b=>b.classList.toggle('chosen',b===mode));const monthly=mode.dataset.priceMode==='monthly';card.querySelector('.price').textContent=monthly?card.dataset.monthlyPrice:card.dataset.lifetimePrice;card.querySelector('.price').textContent += monthly?'/mo':'';card.querySelector('.product-add').dataset.selectedPrice=monthly?card.dataset.monthlyPrice:card.dataset.lifetimePrice;card.querySelector('.product-add').dataset.selectedMode=monthly?'Subscription':'Lifetime';return;}
   const add=event.target.closest('.product-add');
-  if(add){addToCart(add.dataset.product||'Store item');return;}
+  if(add){addToCart(add.dataset.product||'Store item',add.dataset.selectedPrice ? `${add.dataset.selectedMode}: ${add.dataset.selectedPrice}` : '');return;}
   const remove=event.target.closest('[data-remove]');
   if(remove){cart.splice(Number(remove.dataset.remove),1);renderCart();}
 });
 
 async function loadManagedProducts(){
-  const root=document.querySelector('#store-categories');
-  if(!root)return;
   try{
-    const [response, meResponse]=await Promise.all([fetch('/api/products',{cache:'no-store'}),fetch('/api/me',{credentials:'same-origin',cache:'no-store'})]);
+    const response=await fetch('/api/products',{cache:'no-store'});
     if(!response.ok)return;
     const products=await response.json();
-    const me=meResponse.ok?await meResponse.json():{signedIn:false,roles:[]};
-    const roles=Array.isArray(me.roles)?me.roles:[];
-    const grouped=new Map();
-    products.forEach(product=>{const category=String(product.category||'Other').trim()||'Other';if(!grouped.has(category))grouped.set(category,[]);grouped.get(category).push(product);});
-    root.replaceChildren();
-    const tabs=document.querySelector('#store-tabs');
-    tabs.querySelectorAll('[data-generated-store]').forEach(node=>node.remove());
-    [...grouped.keys()].forEach((category,index)=>{
-      const key=`category-${index}`;
-      const tab=document.createElement('button');tab.className='subtab';tab.dataset.store=key;tab.dataset.generatedStore='true';tab.textContent=category.toUpperCase();
-      tabs.insertBefore(tab,tabs.querySelector('[data-store="cart"]'));
-      const section=document.createElement('section');section.className='store-category hidden';section.dataset.storePanel=key;
-      const heading=document.createElement('div');heading.className='category-title';const h2=document.createElement('h2');h2.textContent=category.toUpperCase();heading.append(h2);
-      const grid=document.createElement('div');grid.className='product-grid managed-products';
-      grouped.get(category).forEach(product=>{
+    const grouped={vip:[],packs:[],kits:[]};
+    products.forEach(product=>{const category=String(product.category||'').toLowerCase();if(grouped[category])grouped[category].push(product);});
+    Object.entries(grouped).forEach(([category,items])=>{
+      const target=document.querySelector(`#managed-products-${category}`);if(!target)return;
+      target.replaceChildren();target.classList.toggle('hidden',items.length===0);
+      items.forEach(product=>{
         const card=document.createElement('article');card.className='product-card';
+        card.dataset.monthlyPrice=product.monthlyPrice||'';card.dataset.lifetimePrice=product.lifetimePrice||product.price||'';
         const title=document.createElement('h3');title.textContent=product.name;
         const description=document.createElement('p');description.textContent=product.description||'Available from the VANDAL store.';
-        const billing=document.createElement('p');billing.textContent=product.billingType==='subscription'?'Subscription':'Lifetime / one-time';
+        card.append(title,description);
+        if(product.contents||product.contentFile){
+          const view=document.createElement('button');view.type='button';view.className='contents-button';view.textContent='◉  View Contents';view.dataset.title=product.name;view.dataset.contents=product.contents||'';
+          if(product.contentFile){view.dataset.file=product.contentFile.data;view.dataset.filename=product.contentFile.name||'contents-file';}
+          card.append(view);
+        }
+        const hasBoth=Boolean(product.monthlyPrice&&(product.lifetimePrice||product.price));
+        if(hasBoth){
+          const toggle=document.createElement('div');toggle.className='purchase-switch';
+          const sub=document.createElement('button');sub.type='button';sub.dataset.priceMode='monthly';sub.textContent='SUBSCRIPTION';sub.className='chosen';
+          const once=document.createElement('button');once.type='button';once.dataset.priceMode='lifetime';once.textContent='ONE TIME';toggle.append(sub,once);card.append(toggle);
+        }
         const priceLabel=document.createElement('div');priceLabel.className='price-label';priceLabel.textContent='PRICE';
-        const price=document.createElement('strong');price.className='price';price.textContent=(product.monthlyPrice && product.lifetimePrice)?`Subscription: ${product.monthlyPrice} · Lifetime: ${product.lifetimePrice}`:(product.billingType==='subscription'?(product.monthlyPrice||product.price):(product.lifetimePrice||product.price));
-        card.append(title,description,billing);
-        if(product.contentFile){const contents=document.createElement('button');contents.className='contents-button';contents.type='button';contents.textContent='◉  View Contents';contents.addEventListener('click',()=>window.open(`/api/product-content/${encodeURIComponent(product.id)}`,'_blank','noopener'));card.append(contents);}
-        if(product.requiredRoleId){const roleNote=document.createElement('small');roleNote.textContent='Requires a specific Discord role';card.append(roleNote);}
-        card.append(priceLabel,price);
-        const button=document.createElement('button');button.className='btn product-add';button.dataset.product=product.name;button.textContent='ADD TO CART';
-        const hasRole=!product.requiredRoleId || roles.includes(product.requiredRoleId);
-        if(!hasRole){button.disabled=true;button.textContent='ROLE REQUIRED';button.title='You need the required Discord role to access this product.';}
-        card.append(button);grid.append(card);
+        const price=document.createElement('strong');price.className='price';const initial=hasBoth?product.monthlyPrice:(product.monthlyPrice||product.lifetimePrice||product.price||'');price.textContent=initial+(hasBoth||product.monthlyPrice&&!product.lifetimePrice?'/mo':'');
+        const button=document.createElement('button');button.className='btn product-add';button.dataset.product=product.name;button.dataset.selectedPrice=initial;button.dataset.selectedMode=product.monthlyPrice&&!product.lifetimePrice?'Subscription':(product.monthlyPrice?'Subscription':'Lifetime');button.textContent='ADD TO CART';
+        card.append(priceLabel,price,button);target.append(card);
       });
-      section.append(heading,grid);root.append(section);
     });
-    if(!products.length)root.innerHTML='<div class="empty-state compact"><h3>No products available yet</h3><p>Store products configured by staff will appear here.</p></div>';
-    const firstTab=tabs.querySelector('[data-generated-store]');
-    if(firstTab){document.querySelectorAll('[data-store]').forEach(t=>t.classList.toggle('selected',t===firstTab));document.querySelectorAll('[data-store-panel]').forEach(p=>p.classList.toggle('hidden',p.dataset.storePanel!==firstTab.dataset.store));}
-  }catch{root.innerHTML='<div class="empty-state compact"><h3>Store products could not be loaded.</h3></div>';}
+    const hasKits=grouped.kits.length>0;document.querySelector('#kits-empty')?.classList.toggle('hidden',hasKits);
+  }catch{}
 }
 loadManagedProducts();
 
@@ -239,8 +258,6 @@ document.querySelector('#account-logout')?.addEventListener('click',async()=>{tr
 let currentMe=null;
 fetch('/api/me',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(me=>{
   currentMe=me;
-  const boosterTab=document.querySelector('[data-inventory=booster]');
-  if(boosterTab)boosterTab.classList.toggle('hidden',!me?.signedIn || Boolean(me.boosterRoleId && (!Array.isArray(me.roles) || !me.roles.includes(me.boosterRoleId))));
   if(!me||!me.signedIn)return;
   const name=me.displayName||me.user.username;
   accountTrigger.dataset.signedIn='true';

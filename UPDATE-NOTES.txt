@@ -18,12 +18,3 @@ Deployment:
 6. Configure Store Kit products with exact in-game kit names before using Admin → Kits & Linked Users.
 
 The bridge secret is required for website-to-bot calls. Discord role/channel creation still depends on bot guild membership, role hierarchy, permissions, and completed `/clan setup`.
-
-
-Store/admin update:
-- Replaced hard-coded Packs/VIP/Kits product cards with catalogue-driven custom categories.
-- Added product editing, subscription/lifetime price fields, Discord role requirements, and optional per-product contents uploads (max 5 MB).
-- Added public View Contents links only for products with an uploaded file.
-- Added configurable Discord-role access for the Booster inventory tab.
-- Added Discord role listing to the admin dashboard API and exposed member roles to the signed-in session response.
-- Payment checkout remains unconnected. Automatic discovery of game-side kit definitions requires a list-kits endpoint in the separate RCE bot service.

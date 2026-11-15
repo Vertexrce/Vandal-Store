@@ -232,11 +232,7 @@ app.get('/api/me', async (req, res) => {
   }
   const accounts = await readAccounts();
   const account = accounts[req.session.user.id] || {};
-  let roles = [];
-  if (BOT_TOKEN) { try { const member = await getGuildMember(req.session.user.id); roles = Array.isArray(member?.roles) ? member.roles : []; } catch {} }
-  let boosterRoleId = '';
-  try { const settings = JSON.parse(await fs.promises.readFile(path.join(DATA_DIR, 'settings.json'), 'utf8')); boosterRoleId = String(settings.boosterRoleId || ''); } catch {}
-  res.json({ signedIn: true, user: req.session.user, account, roles, boosterRoleId, displayName: account.gamertag || req.session.user.username, isAdmin, roleCheckAvailable });
+  res.json({ signedIn: true, user: req.session.user, account, displayName: account.gamertag || req.session.user.username, isAdmin, roleCheckAvailable });
 });
 app.post('/api/account/link', requireLogin, async (req, res) => {
   const gamertag = String(req.body?.gamertag || '').trim();
@@ -276,36 +272,17 @@ async function writeProducts(products) {
 }
 app.get('/api/admin/products', requireAdmin, async (req, res) => res.json(await readProducts()));
 app.post('/api/admin/products', requireAdmin, async (req, res) => {
-  const product = normalizeProductInput(req.body || {});
-  if (product.error) return res.status(400).json({ error: product.error });
+  const { name, category, price, monthlyPrice, description, contents } = req.body || {};
+  const gameKit = String(req.body?.gameKit || '').trim();
+  const oneTime = String(price || '').trim(), monthly = String(monthlyPrice || '').trim();
+  const contentFile = req.body?.contentFile;
+  if (![name, category].every(v => typeof v === 'string' && v.trim()) || (!oneTime && !monthly) || name.length > 80 || description?.length > 500 || String(contents || '').length > 5000 || !['VIP', 'Packs', 'Kits'].includes(category)) return res.status(400).json({ error: 'Enter a name, category, and at least one price. Keep descriptions and contents within the stated limits.' });
+  if (contentFile && (typeof contentFile.data !== 'string' || contentFile.data.length > 2800000 || !/^(data:(application\/pdf|text\/plain|image\/(png|jpeg|webp));base64,)/i.test(contentFile.data) || String(contentFile.name || '').length > 120)) return res.status(400).json({ error: 'Contents file must be a PDF, TXT, PNG, JPG, or WEBP file no larger than 2 MB.' });
+  if (category === 'Kits' && !/^[A-Za-z0-9 _.-]{1,64}$/.test(gameKit)) return res.status(400).json({ error: 'For a kit product, enter the exact in-game RCE kit name using letters, numbers, spaces, dots, underscores, or hyphens.' });
   const products = await readProducts();
-  const created = { id: crypto.randomUUID(), ...product.value, createdAt: new Date().toISOString() };
-  products.push(created); await writeProducts(products); res.status(201).json(created);
+  const product = { id: require('crypto').randomUUID(), name: name.trim(), category: category.trim(), price: oneTime || monthly, ...(oneTime ? { lifetimePrice: oneTime } : {}), ...(monthly ? { monthlyPrice: monthly } : {}), description: String(description || '').trim(), contents: String(contents || '').trim(), ...(contentFile ? { contentFile: { name: String(contentFile.name || 'contents-file'), data: contentFile.data } } : {}), ...(category === 'Kits' ? { gameKit } : {}), createdAt: new Date().toISOString() };
+  products.push(product); await writeProducts(products); res.status(201).json(product);
 });
-app.put('/api/admin/products/:id', requireAdmin, async (req, res) => {
-  const products = await readProducts();
-  const index = products.findIndex(item => item.id === req.params.id);
-  if (index < 0) return res.status(404).json({ error: 'Product not found.' });
-  const product = normalizeProductInput(req.body || {});
-  if (product.error) return res.status(400).json({ error: product.error });
-  products[index] = { ...products[index], ...product.value, id: products[index].id, createdAt: products[index].createdAt, updatedAt: new Date().toISOString() };
-  await writeProducts(products); res.json(products[index]);
-});
-function normalizeProductInput(body) {
-  const name = String(body.name || '').trim();
-  const category = String(body.category || '').trim().slice(0, 40);
-  const description = String(body.description || '').trim();
-  const gameKit = String(body.gameKit || '').trim();
-  const billingType = ['subscription', 'lifetime'].includes(body.billingType) ? body.billingType : 'lifetime';
-  const monthlyPrice = String(body.monthlyPrice || '').trim();
-  const lifetimePrice = String(body.lifetimePrice || body.price || '').trim();
-  if (!name || name.length > 80 || !category || description.length > 500) return { error: 'Enter a product name and category, and keep the description under 500 characters.' };
-  if (billingType === 'subscription' && !monthlyPrice) return { error: 'Enter the subscription price.' };
-  if (billingType === 'lifetime' && !lifetimePrice) return { error: 'Enter the lifetime price.' };
-  if (String(category).toLowerCase() === 'kits' && !/^[A-Za-z0-9 _.-]{1,64}$/.test(gameKit)) return { error: 'For a kit product, enter the exact in-game RCE kit name.' };
-  const requiredRoleId = String(body.requiredRoleId || '').trim();
-  return { value: { name, category, description, gameKit: gameKit || '', billingType, monthlyPrice, lifetimePrice, price: billingType === 'subscription' ? monthlyPrice : lifetimePrice, requiredRoleId } };
-}
 app.delete('/api/admin/products/:id', requireAdmin, async (req, res) => {
   const products = await readProducts();
   const next = products.filter(p => p.id !== req.params.id);
@@ -321,42 +298,6 @@ app.put('/api/admin/products/:id/kit-config', requireAdmin, async (req, res) => 
   product.gameKit = gameKit;
   await writeProducts(products);
   res.json({ ok: true, product });
-});
-app.post('/api/admin/products/:id/content', requireAdmin, async (req, res) => {
-  const products = await readProducts();
-  const product = products.find(item => item.id === req.params.id);
-  if (!product) return res.status(404).json({ error: 'Product not found.' });
-  const fileName = String(req.body?.fileName || 'contents.txt').replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 100);
-  const requestedMime = String(req.body?.mimeType || 'text/plain').slice(0, 100);
-  const allowedTypes = new Set(['application/pdf', 'text/plain', 'text/csv', 'image/png', 'image/jpeg', 'image/webp', 'application/octet-stream', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
-  const mimeType = allowedTypes.has(requestedMime) ? requestedMime : 'application/octet-stream';
-  const data = String(req.body?.data || '');
-  if (!data || data.length > 7_000_000) return res.status(400).json({ error: 'Choose a file smaller than 5 MB.' });
-  const buffer = Buffer.from(data, 'base64');
-  if (!buffer.length || buffer.length > 5 * 1024 * 1024) return res.status(400).json({ error: 'Choose a valid file smaller than 5 MB.' });
-  const ext = require('path').extname(fileName).slice(0, 12);
-  const storedName = `${crypto.randomUUID()}${ext}`;
-  const directory = path.join(DATA_DIR, 'product-contents');
-  await fs.promises.mkdir(directory, { recursive: true, mode: 0o700 });
-  await fs.promises.writeFile(path.join(directory, storedName), buffer, { mode: 0o600 });
-  product.contentFile = storedName;
-  product.contentName = fileName;
-  product.contentType = mimeType;
-  product.contentSize = buffer.length;
-  await writeProducts(products);
-  res.json({ ok: true, contentName: fileName, contentSize: buffer.length });
-});
-app.get('/api/product-content/:id', async (req, res) => {
-  const product = (await readProducts()).find(item => item.id === req.params.id);
-  if (!product?.contentFile) return res.status(404).send('No contents file is available.');
-  const filePath = path.join(DATA_DIR, 'product-contents', path.basename(product.contentFile));
-  try {
-    await fs.promises.access(filePath);
-    res.set('Content-Type', product.contentType || 'application/octet-stream');
-    res.set('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(product.contentName || 'contents')}`);
-    res.set('X-Content-Type-Options', 'nosniff');
-    res.sendFile(filePath);
-  } catch { res.status(404).send('Contents file is unavailable.'); }
 });
 
 const { createDashboardApi } = require('./dashboard-api');

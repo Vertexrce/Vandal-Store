@@ -171,8 +171,7 @@ function createClanApi(app, options) {
         name: product.name,
         gameKit: product.gameKit || '',
         price: product.price,
-        description: product.description || '',
-        requiredRoleId: product.requiredRoleId || ''
+        description: product.description || ''
       })),
       servers
     });
@@ -194,16 +193,8 @@ function createClanApi(app, options) {
     const owner = Object.entries(accounts).find(([, account]) => String(account?.gamertag || '').trim().toLowerCase() === normalizedGamertag);
     if (!owner) return res.status(409).json({ error: 'No linked website account matches that gamertag. Ask the player to sign in and link the same in-game name, then try again.' });
 
-    const result = await rceRequest('/v1/kits/give', {
-      method: 'POST',
-      body: {
-        guildId: GUILD_ID,
-        serverId,
-        kitName: product.gameKit,
-        gamertag,
-        actorId: req.session.user.id
-      }
-    });
+    // Admin grants ownership in the website inventory. The player receives the
+    // in-game kit only when they press Claim, where the cooldown is enforced.
 
     const [discordId, account] = owner;
     const purchasedKits = Array.isArray(account.purchasedKits) ? account.purchasedKits : [];
@@ -219,7 +210,36 @@ function createClanApi(app, options) {
     });
     accounts[discordId] = { ...account, purchasedKits };
     await writeAccounts(accounts);
-    res.json({ ...result, inventoryUpdated: true, message: `Gave ${product.name} to ${gamertag} and added it to their Purchased Kits inventory.` });
+    res.json({ inventoryUpdated: true, message: `Added ${product.name} to ${gamertag}'s Purchased Kits inventory.` });
+  }));
+
+  app.post('/api/inventory/:kitId/claim', requireLogin, wrap(async (req, res) => {
+    const kitId = String(req.params.kitId || '');
+    const discordId = req.session.user.id;
+    const accounts = await readAccounts();
+    const account = accounts[discordId] || {};
+    const purchasedKits = Array.isArray(account.purchasedKits) ? account.purchasedKits : [];
+    const kit = purchasedKits.find(item => item.id === kitId);
+    if (!kit) return res.status(404).json({ error: 'That kit is not in your inventory.' });
+    const now = Date.now();
+    const cooldownUntil = kit.cooldownUntil ? new Date(kit.cooldownUntil).getTime() : 0;
+    if (Number.isFinite(cooldownUntil) && cooldownUntil > now) {
+      return res.status(429).json({ error: 'This kit is still on cooldown.', cooldownUntil: kit.cooldownUntil });
+    }
+    if (!account.gamertag || String(account.gamertag).trim().toLowerCase() !== String(kit.gamertag || '').trim().toLowerCase()) {
+      return res.status(409).json({ error: 'Your linked in-game name does not match this kit. Relink your account or contact an admin.' });
+    }
+    if (!kit.gameKit || !kit.serverId) return res.status(400).json({ error: 'This inventory kit is missing its in-game kit or server configuration.' });
+
+    await rceRequest('/v1/kits/give', {
+      method: 'POST',
+      body: { guildId: GUILD_ID, serverId: kit.serverId, kitName: kit.gameKit, gamertag: account.gamertag, actorId: discordId }
+    });
+    kit.lastClaimedAt = new Date(now).toISOString();
+    kit.cooldownUntil = new Date(now + 12 * 60 * 60 * 1000).toISOString();
+    accounts[discordId] = { ...account, purchasedKits };
+    await writeAccounts(accounts);
+    res.json({ success: true, cooldownUntil: kit.cooldownUntil, message: `${kit.name || kit.gameKit} claimed successfully.` });
   }));
 }
 
